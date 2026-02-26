@@ -13,6 +13,9 @@
 - M00：新增健康检查接口 `GET /api/health/`。
 - M00：补充日志中间件、CORS 配置、资源管理器（SQLAlchemy/Redis 初始化骨架）。
 - M00：补充 `.env.example` 与 `backend/monolith/README.md`。
+- M00：补充 Alembic 迁移骨架（`migrations/`、`alembic.ini`）并验证 `alembic current` 可执行。
+- M00：新增本地启动/测试脚本（`scripts/run_dev.ps1`、`scripts/run_test.ps1`）。
+- M00：补充统一响应文档（`docs/api/response_contract.md`）。
 - M00：扩展测试覆盖参数校验与业务异常处理，并通过 `uv run pytest`（3 passed）。
 - 规范升级：强制“临时分支开发 -> 验收通过 -> 合并 master”流程。
 - 规范升级：提交说明使用中文描述。
