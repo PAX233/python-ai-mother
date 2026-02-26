@@ -11,7 +11,9 @@
 - M00：初始化 FastAPI 单体后端骨架（`backend/monolith/app`、`backend/monolith/tests`）。
 - M00：新增统一响应模型、错误码定义、业务异常与全局异常处理。
 - M00：新增健康检查接口 `GET /api/health/`。
-- M00：新增 smoke test，并通过 `uv run pytest`（1 passed）。
+- M00：补充日志中间件、CORS 配置、资源管理器（SQLAlchemy/Redis 初始化骨架）。
+- M00：补充 `.env.example` 与 `backend/monolith/README.md`。
+- M00：扩展测试覆盖参数校验与业务异常处理，并通过 `uv run pytest`（3 passed）。
 - 规范升级：强制“临时分支开发 -> 验收通过 -> 合并 master”流程。
 - 规范升级：提交说明使用中文描述。
 
@@ -32,4 +34,3 @@
   - `8f9bded` `docs: optimize refactor roadmap aligned to yu-ai git milestones`
 - 固化分支流程规范，并将重构计划与日志改为中文维护。
   - `62a9cc7` `docs: 规范分支流程并改为中文提交与日志`
-
