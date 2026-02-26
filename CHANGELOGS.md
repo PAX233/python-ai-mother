@@ -12,6 +12,7 @@
 - 规范升级：强制“临时分支开发 -> 验收通过 -> 合并 master”流程。
 - 规范升级：提交说明使用中文描述。
 - 规范升级：重构计划补充分支、验收、门禁规则。
+- 启动准备：完成重构计划最终校验，新增 `M00` 开工清单。
 
 ## 2026-02-26
 
@@ -26,4 +27,3 @@
   - `83fb120` `docs: enforce project-local env policy with uv`
 - 优化重构路线，按 `yu-ai-code-mother` 历史里程碑对齐。
   - `8f9bded` `docs: optimize refactor roadmap aligned to yu-ai git milestones`
-
