@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(BusinessException)
     async def handle_business_exception(_: Request, exc: BusinessException) -> JSONResponse:
-        payload = error_response(ErrorCode(exc.code), exc.message).model_dump()
+        payload = error_response(exc.code, exc.message).model_dump()
         return JSONResponse(status_code=200, content=payload)
 
     @app.exception_handler(RequestValidationError)
@@ -27,4 +27,3 @@ def register_exception_handlers(app: FastAPI) -> None:
         logger.exception("Unhandled server error: %s", exc)
         payload = error_response(ErrorCode.SYSTEM_ERROR, "系统内部错误").model_dump()
         return JSONResponse(status_code=200, content=payload)
-
