@@ -12,6 +12,7 @@ venv/
 .coverage
 coverage.xml
 htmlcov/
+*.db
 
 # Frontend
 node_modules/
@@ -23,4 +24,3 @@ coverage/
 Thumbs.db
 .vscode/
 .idea/
-
