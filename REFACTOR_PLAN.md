@@ -1,43 +1,34 @@
-# Python AI Mother 重构计划（基于 yu-ai-code-mother 提交历史）
+# Python AI Mother 重构计划（强对标 yu-ai Git 历史）
 
-## 1. 目标与边界
-- 目标：在 `python-ai-mother` 中重建一个与 `yu-ai-code-mother` 功能等价的项目。
-- 约束：前端技术栈保持不变（Vue3 + TS + Vite + Ant Design Vue）。
-- 约束：后端全部由 Java 迁移为 Python 技术栈。
-- 策略：严格按原项目 Git 历史的功能演进顺序推进，先单体，后微服务。
+## 1. 重构目标
+- 在 `python-ai-mother` 中重建与 `yu-ai-code-mother` 等价的产品能力。
+- 前端保持原技术栈：Vue3 + TypeScript + Vite + Ant Design Vue。
+- 后端完全替换为 Python 技术栈。
+- 迭代顺序严格对标原仓库提交演进路径（先单体，后微服务）。
 
-## 2. 当前状态
-- 已完成：创建目录 `python-ai-mother`。
-- 已完成：初始化 Git 仓库。
-- 已完成：创建项目内 Python 虚拟环境 `.venv`（`uv venv .venv`）。
-- 待完成：项目骨架、重构实现、测试、部署、可观测性、微服务化。
+## 2. 环境规范（强制）
+- Python 虚拟环境必须在项目内：`.venv/`
+- Python 包管理统一使用 `uv`，禁止全局 `pip install`
+- 标准命令：
+  - `uv venv .venv`
+  - `uv pip install -r requirements.txt`
+  - `uv run python xxx.py`
+  - `uv run pytest`
+- Node 版本使用 `nvm` 固定，依赖仅在项目目录安装。
 
-## 2.1 环境规范（强制）
-- Python 环境必须在项目内创建，路径固定为 `.venv/`。
-- Python 包管理统一使用 `uv`，不使用全局 `pip install`。
-- 统一命令：
-  - 创建环境：`uv venv .venv`
-  - 安装依赖：`uv pip install -r requirements.txt`
-  - 运行脚本：`uv run python xxx.py`
-  - 运行测试：`uv run pytest`
-- 前端环境也尽量项目内隔离：
-  - 使用 `nvm` 固定 Node 版本。
-  - 依赖安装仅在项目目录执行（`npm ci` / `npm install`）。
-
-## 3. 后端技术栈替换矩阵（Java -> Python）
-- Spring Boot Web -> FastAPI
+## 3. 后端替换技术栈（Java -> Python）
+- Spring Boot -> FastAPI
 - MyBatis-Flex -> SQLAlchemy 2.x + Alembic
 - Spring Validation -> Pydantic v2
-- Spring Session + Redis -> Redis Session（自定义中间件 / fastapi-sessions）
-- AOP + Interceptor -> FastAPI Middleware + Dependency + Decorator
-- Knife4j / OpenAPI -> FastAPI OpenAPI + Swagger UI
+- Spring Session + Redis -> Redis Session Middleware
+- AOP/Interceptor -> Middleware + Dependency + Decorator
 - LangChain4j -> LangChain Python
 - LangGraph4j -> LangGraph Python
 - Redisson 限流 -> Redis + slowapi（或自定义令牌桶）
-- Actuator + Micrometer -> Prometheus FastAPI Instrumentator + OpenTelemetry
-- Dubbo + Nacos -> gRPC/HTTP + Nacos（Python SDK）服务注册发现
+- Actuator/Micrometer -> Prometheus + OpenTelemetry
+- Dubbo + Nacos -> gRPC/HTTP + Nacos 注册发现
 
-## 4. 目录规划（目标形态）
+## 4. 目标目录结构
 ```text
 python-ai-mother/
   backend/
@@ -50,7 +41,7 @@ python-ai-mother/
       app-service/
       ai-service/
       screenshot-service/
-  frontend/                # 基于原前端技术栈复用
+  frontend/
   deploy/
     docker/
     k8s/
@@ -60,172 +51,222 @@ python-ai-mother/
     runbooks/
 ```
 
-## 5. 重构顺序（严格映射 yu-ai 提交历史）
+## 5. 对标总览（按 yu-ai 提交顺序）
 
-### Phase 00：项目初始化（对应 67a0407, 93a80d4, 33d879a, ba30735, aadf53e）
-- 目标：Python 后端与前端工程骨架建立完成。
-- 后端任务：
-  - 初始化 FastAPI 项目结构。
-  - 配置 SQLAlchemy、Alembic、Redis 客户端、日志模块。
-  - 建立统一响应格式、异常基类、错误码体系。
-  - 建立基础中间件（CORS、请求日志、异常处理）。
-- 前端任务：
-  - 拷贝并验证原前端可运行。
-  - 将 API 基础地址改为 Python 后端。
-- 验收：
-  - 健康接口可访问。
-  - 前后端基本联通。
+| 里程碑 | 对标提交 | 核心主题 |
+|---|---|---|
+| M00 | `67a0407` `93a80d4` `33d879a` `ba30735` `aadf53e` | 初始化与基础依赖 |
+| M01 | `c96ffa8` `d52f335` `55ab6c7` | 用户模块 |
+| M02 | `2f783b3` `6c38f1d` | AI 应用生成初版 |
+| M03 | `868c65b` `9112c1f` `e05b173` `44f81d6` `fc48d1e` `81eeda3` | 应用模块 + 部署 |
+| M04 | `092f62f` `bc7aaac` `55a5613` `3818b73` `94fdc9a` | 对话历史 + Redis Session |
+| M05 | `19b1bcd` `1695a3a` `845a82c` `76df070` | 工程项目生成 |
+| M06 | `6519021` `499312b` `695d809` | 截图 + 打包 + AI 路由 |
+| M07 | `cce4ad1` `e05c04c` `89c7725` | 可视化修改 |
+| M08 | `f69f244` `c755246` `cd25d72` `1ac37d8` `62b5655` `5dd51f0` `c55d713` | AI 工作流 |
+| M09 | `08cb772` `1939024` `2d32bb4` `566d530` `3e71e72` `5d45f3a` `b99d502` | 系统优化 |
+| M10 | `ad303cc` `18c86bc` | 部署上线 + 可观测性 |
+| M11 | `9211e98` 到 `893918c` | 微服务改造完成 |
 
-### Phase 01：用户模块（对应 c96ffa8, d52f335, 55ab6c7）
-- 目标：实现用户注册、登录、获取登录态、退出登录。
-- 后端任务：
-  - User 表模型、DAO、Service、Router。
-  - 密码加密、会话写入 Redis。
-  - 管理员角色与基础权限判断。
-- 前端任务：
-  - 登录页、注册页、登录态存储、路由守卫联调。
-- 验收：
-  - 注册/登录/退出全链路可用。
-  - 未登录访问受限接口返回正确错误码。
+## 6. 详细重构计划（逐里程碑）
 
-### Phase 02：AI 应用生成初版（对应 2f783b3, 6c38f1d）
-- 目标：实现 AI 生成基础能力。
-- 后端任务：
-  - 接入 LLM（OpenAI 兼容接口）。
-  - 设计 Prompt 模板加载机制。
-  - 初版代码解析与保存逻辑。
-- 验收：
-  - 可根据简单提示词返回可用生成结果。
+### M00 初始化与基础依赖（对标第2期）
+- 范围：
+  - 初始化 FastAPI 单体骨架
+  - 接入 SQLAlchemy/Alembic/Redis
+  - 建立统一错误码、统一响应、全局异常
+  - 前端接入 Python 后端 baseURL
+- 交付：
+  - `backend/monolith/app/main.py`
+  - `backend/monolith/app/core/*`
+  - `frontend` 可调用 `GET /health`
+- DoD：
+  - 健康接口可访问
+  - 前后端可联通
+  - `uv run pytest` 至少有 smoke test
 
-### Phase 03：应用模块与部署流程（对应 868c65b, 9112c1f, e05b173, 44f81d6, fc48d1e, 81eeda3）
-- 目标：应用 CRUD、应用生成、应用部署闭环。
-- 后端任务：
-  - App 表模型、CRUD API、分页查询。
-  - 应用生成接口与部署接口。
-  - 静态资源访问与下载入口。
-- 前端任务：
-  - 首页、应用管理、应用编辑、应用详情联调。
-- 验收：
-  - 完整应用管理流程可演示。
+### M01 用户模块（对标第3期）
+- 范围：
+  - 用户注册、登录、登出、登录态查询
+  - 用户角色（user/admin）基础权限
+  - Redis Session 写入与读取
+- 交付：
+  - `POST /user/register`
+  - `POST /user/login`
+  - `GET /user/get/login`
+  - `POST /user/logout`
+- DoD：
+  - 四个接口联调通过
+  - 未登录访问管理接口返回预期错误码
+  - 前端路由守卫行为一致
 
-### Phase 04：对话历史与会话增强（对应 092f62f, bc7aaac, 55a5613, 3818b73, 94fdc9a）
-- 目标：对话记录持久化，Redis Session 稳定运行。
-- 后端任务：
-  - ChatHistory 表模型、写入与分页查询。
-  - AI 对话记忆持久化策略。
-- 前端任务：
-  - 对话历史展示与回放。
-- 验收：
-  - 对话上下文可持续。
-  - 刷新后历史可见。
+### M02 AI 应用生成初版（对标第4期）
+- 范围：
+  - 模型接入与 prompt 加载
+  - 简化版代码生成
+  - 初版结果落盘
+- 交付：
+  - AI 生成服务与最小 API
+- DoD：
+  - 通过提示词返回可用生成结果
+  - 异常输入有明确错误处理
 
-### Phase 05：工程级项目生成（对应 19b1bcd, 1695a3a, 845a82c, 76df070）
-- 目标：支持工程模式生成与流式工具调用。
-- 后端任务：
-  - 工程模板生成器。
-  - 工具调用执行器（读写改删文件）。
-  - SSE 流式输出协议。
-- 前端任务：
-  - 工程模式聊天页联调，流式展示消息。
-- 验收：
-  - 可生成多文件工程并实时输出过程。
+### M03 应用模块与部署（对标第5期）
+- 范围：
+  - 应用 CRUD、分页、详情、编辑
+  - 应用生成与部署
+  - 静态资源访问和项目下载
+- 交付（关键接口）：
+  - `POST /app/add`
+  - `POST /app/update`
+  - `POST /app/delete`
+  - `GET /app/get/vo`
+  - `POST /app/my/list/page/vo`
+  - `POST /app/good/list/page/vo`
+  - `POST /app/deploy`
+  - `GET /app/download/{appId}`
+- DoD：
+  - 应用主流程可演示
+  - 前端对应页面全联调通过
 
-### Phase 06：功能扩展（对应 6519021, 499312b, 695d809）
-- 目标：截图、打包下载、AI 路由。
-- 后端任务：
-  - Screenshot 服务（Playwright 优先）。
-  - 项目打包下载。
-  - 多模型路由策略。
-- 验收：
-  - 一键截图可用。
-  - 打包下载可用。
+### M04 对话历史与会话增强（对标第6期）
+- 范围：
+  - chat_history 持久化
+  - 对话历史查询
+  - 会话持续性与刷新恢复
+- 交付：
+  - `GET /chatHistory/app/{appId}`
+- DoD：
+  - 历史记录可写可查
+  - 刷新后可恢复历史
 
-### Phase 07：可视化修改（对应 cce4ad1, e05c04c, 89c7725）
-- 目标：可视化编辑（全量与增量模式）。
-- 后端任务：
-  - 增量修改与全量重写接口。
-  - 文件差异检测与安全回滚。
-- 前端任务：
-  - 可视化编辑交互联调。
-- 验收：
-  - 同一应用可执行全量和增量两种修改。
+### M05 工程项目生成（对标第7期）
+- 范围：
+  - 多文件工程生成
+  - 工具调用（读写改删）
+  - SSE 流式输出
+- 交付：
+  - `GET /app/chat/gen/code`（SSE）
+- DoD：
+  - 生成过程可流式展示
+  - 工具调用日志可追踪
 
-### Phase 08：AI 工作流（对应 f69f244, c755246, cd25d72, 1ac37d8, 62b5655, 5dd51f0, c55d713）
-- 目标：基于 LangGraph Python 实现工作流编排。
-- 后端任务：
-  - Router / PromptEnhancer / CodeGenerator / QualityCheck 节点。
-  - 图片并发收集子图。
-  - 工作流状态管理与可观测日志。
-- 验收：
-  - 工作流生成链路可运行并可追踪节点执行。
+### M06 功能扩展（对标第8期）
+- 范围：
+  - 截图服务（推荐 Playwright）
+  - 打包下载
+  - AI 路由（多模型选择）
+- 交付：
+  - 截图 API、打包 API、模型路由策略
+- DoD：
+  - 截图和打包可稳定运行
+  - 至少两种模型路由策略可验证
 
-### Phase 09：系统优化（对应 08cb772, 1939024, 2d32bb4, 566d530, 3e71e72, 5d45f3a, b99d502）
-- 目标：并发、缓存、实时性、安全性、稳定性、成本优化。
-- 后端任务：
-  - AI 调用并发控制。
-  - Redis + 本地缓存策略。
-  - 限流、Prompt 安全审查、重试与熔断。
-  - 成本控制（token 配额、低成本模型路由）。
-- 验收：
-  - 压测指标优于 Phase 08 基线。
-  - 关键安全策略可验证。
+### M07 可视化修改（对标第9期）
+- 范围：
+  - 全量修改与增量修改接口
+  - 变更差异处理与安全回滚
+- 交付：
+  - 可视化修改相关 API
+- DoD：
+  - 同一应用支持全量/增量两种改法
+  - 回滚能力可演示
 
-### Phase 10：部署与可观测性（对应 ad303cc, 18c86bc）
-- 目标：可部署、可监控、可告警。
-- 任务：
-  - Docker Compose 部署单体版本。
-  - Prometheus + Grafana 指标接入。
-  - 关键业务指标（QPS、耗时、模型调用次数、失败率）上报。
-- 验收：
-  - 一键部署可运行。
-  - 监控面板可观察核心指标。
+### M08 AI 工作流（对标第10期）
+- 范围：
+  - LangGraph Python 工作流
+  - 并发子图（图片收集）
+  - 节点执行日志
+- 交付：
+  - 工作流入口与核心节点（Router/Enhancer/Generator/QualityCheck）
+- DoD：
+  - 工作流端到端可跑通
+  - 节点级日志可追踪
 
-### Phase 11：微服务改造（对应 9211e98 -> 893918c）
-- 目标：完成 Python 微服务化，顺序必须与原项目一致。
-- 顺序与任务：
-  - 11.1 通用模块：common（配置、异常、工具、中间件）。
-  - 11.2 数据模型模块：model（实体、DTO、VO、枚举）。
-  - 11.3 服务接口模块：client（内部服务协议定义）。
-  - 11.4 用户服务：user-service（认证鉴权、用户管理）。
-  - 11.5 AI 服务：ai-service（模型、Prompt、工作流、工具调用）。
-  - 11.6 应用服务：app-service（业务聚合、编排、静态资源）。
-  - 11.7 截图服务：screenshot-service。
-  - 11.8 跨服务调用：服务注册发现 + 服务间协议（gRPC/HTTP）。
-  - 11.9 微服务收敛：完成单体兼容与微服务双形态。
-- 验收：
-  - 服务独立可启动。
-  - 跨服务调用链路稳定。
-  - 与单体功能等价。
+### M09 系统优化（对标第11期）
+- 范围：
+  - 并发优化、缓存优化、实时性优化
+  - 限流、Prompt 安全审查
+  - 稳定性与成本优化
+- 交付：
+  - 限流与审查中间件
+  - 缓存策略（Redis + 本地缓存）
+- DoD：
+  - 压测指标有对比提升
+  - 安全策略可验证
 
-## 6. 提交与分支策略（按阶段小步快跑）
-- 分支命名：`temp/py-refactor-phase-{nn}-{date}`
-- 每个 Phase 至少拆成 2~5 个原子提交。
+### M10 部署与可观测性（对标第12-13期）
+- 范围：
+  - Docker Compose 部署
+  - Prometheus + Grafana
+  - 核心指标埋点
+- 交付：
+  - 可一键启动的部署脚本
+  - 仪表盘配置
+- DoD：
+  - 服务可部署
+  - 指标可观测（QPS/延迟/错误率/模型调用）
+
+### M11 微服务改造（对标第14期）
+- 说明：原仓库第14期存在多个“中间态提交”，必须整体对标最终态 `893918c`。
+- 范围顺序（必须按序）：
+  - M11.1 `common`
+  - M11.2 `model`
+  - M11.3 `client`
+  - M11.4 `user-service`
+  - M11.5 `ai-service`
+  - M11.6 `app-service`
+  - M11.7 `screenshot-service`
+  - M11.8 跨服务调用（注册发现 + RPC/HTTP）
+  - M11.9 微服务完成态收敛
+- DoD：
+  - 各服务可独立启动
+  - 跨服务链路稳定
+  - 与单体能力等价
+
+## 7. 接口兼容优先级（先保核心）
+- P0（必须首批完成）：
+  - `/user/register` `/user/login` `/user/get/login` `/user/logout`
+  - `/app/add` `/app/update` `/app/my/list/page/vo` `/app/chat/gen/code`
+- P1（第二批完成）：
+  - `/app/deploy` `/app/download/{appId}` `/chatHistory/app/{appId}`
+- P2（后续扩展）：
+  - 管理端接口、工作流演示接口、可视化修改接口
+
+## 8. 分支与提交策略（对标历史的“小步快跑”）
+- 分支命名：
+  - `temp/py-m{milestone}-{yyyymmdd}`
+- 每个里程碑拆 2~6 次提交，不做超大提交。
 - 提交信息模板：
-  - `feat(phase-xx): {功能点}`
-  - `fix(phase-xx): {问题修复}`
-  - `test(phase-xx): {测试补充}`
-- 每个提交必须附带本地验证记录（接口/测试/截图）。
+  - `feat(mXX): ...`
+  - `fix(mXX): ...`
+  - `test(mXX): ...`
+  - `docs(mXX): ...`
+- 每次提交附带最小验证记录（命令 + 结果摘要）。
 
-## 7. 测试策略
-- 单元测试：`pytest` + `pytest-asyncio`
-- 接口测试：`httpx` / `pytest` 集成测试
-- 前端联调：保持原有 `npm run build` / `npm run lint` 校验
-- E2E（后期）：Playwright
-- 阶段门禁：每个 Phase 完成后至少通过一次回归测试清单
+## 9. 测试门禁（每个里程碑都要过）
+- 后端：
+  - `uv run pytest`
+  - 关键 API 集成测试通过
+- 前端：
+  - `npm run build`
+  - `npm run lint`（如已有规则）
+- 联调：
+  - 至少 1 条端到端主链路可演示
 
-## 8. 关键风险与回滚方案
-- 风险：一次性替换全部后端导致联调中断。
-  - 方案：先构建 Python 单体等价版本，再拆微服务。
-- 风险：AI 工作流迁移复杂，行为不一致。
-  - 方案：先保留“简化工作流”可运行版本，再逐步对齐高级特性。
-- 风险：跨服务协议与发现机制不稳定。
-  - 方案：先 HTTP 内部调用，稳定后升级 gRPC + 注册发现。
-- 风险：前端改动过大影响节奏。
-  - 方案：前端只做必要 API 适配，不做风格重构。
+## 10. 风险与回滚策略
+- 风险：后端全量替换导致联调中断
+  - 回滚：保持“单体可运行主分支”，微服务在独立分支推进
+- 风险：工作流迁移复杂度高
+  - 回滚：先交付简化工作流，再逐步补高级节点
+- 风险：跨服务协议不稳定
+  - 回滚：先内部 HTTP，稳定后再升级 gRPC
+- 风险：前端改动膨胀
+  - 回滚：前端仅做接口适配，不做无关 UI 重构
 
-## 9. 第一阶段（下一步要做）
-- [ ] 建立 `backend/monolith` FastAPI 骨架。
-- [ ] 建立基础配置加载与日志体系。
-- [ ] 落地统一响应与错误码。
-- [ ] 提供 `/health` 接口并完成前端连通测试。
-- [ ] 生成 Phase 00 的第一批提交。
+## 11. 下一步（立即执行）
+- [ ] 建立 `backend/monolith` FastAPI 初始工程
+- [ ] 建立基础配置、日志、错误码、统一响应
+- [ ] 建立 `/health` 并完成前端连通
+- [ ] 提交 `M00` 第 1 批 commit
+
