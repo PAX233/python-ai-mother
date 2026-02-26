@@ -9,7 +9,20 @@
 ## 2. 当前状态
 - 已完成：创建目录 `python-ai-mother`。
 - 已完成：初始化 Git 仓库。
+- 已完成：创建项目内 Python 虚拟环境 `.venv`（`uv venv .venv`）。
 - 待完成：项目骨架、重构实现、测试、部署、可观测性、微服务化。
+
+## 2.1 环境规范（强制）
+- Python 环境必须在项目内创建，路径固定为 `.venv/`。
+- Python 包管理统一使用 `uv`，不使用全局 `pip install`。
+- 统一命令：
+  - 创建环境：`uv venv .venv`
+  - 安装依赖：`uv pip install -r requirements.txt`
+  - 运行脚本：`uv run python xxx.py`
+  - 运行测试：`uv run pytest`
+- 前端环境也尽量项目内隔离：
+  - 使用 `nvm` 固定 Node 版本。
+  - 依赖安装仅在项目目录执行（`npm ci` / `npm install`）。
 
 ## 3. 后端技术栈替换矩阵（Java -> Python）
 - Spring Boot Web -> FastAPI
@@ -216,4 +229,3 @@ python-ai-mother/
 - [ ] 落地统一响应与错误码。
 - [ ] 提供 `/health` 接口并完成前端连通测试。
 - [ ] 生成 Phase 00 的第一批提交。
-
