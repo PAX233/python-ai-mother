@@ -17,6 +17,8 @@
 - M00：新增本地启动/测试脚本（`scripts/run_dev.ps1`、`scripts/run_test.ps1`）。
 - M00：补充统一响应文档（`docs/api/response_contract.md`）。
 - M00：扩展测试覆盖参数校验与业务异常处理，并通过 `uv run pytest`（3 passed）。
+- M00：引入原前端工程到 `frontend/`，保持技术栈不变。
+- M00：完成前端 baseURL 适配（`/api` + Vite 代理 `8123`），并通过 `npm run build`。
 - M00：完成验收记录（`docs/runbooks/M00_ACCEPTANCE.md`），准备提合并申请。
 - 规范升级：强制“临时分支开发 -> 验收通过 -> 合并 master”流程。
 - 规范升级：提交说明使用中文描述。
