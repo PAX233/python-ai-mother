@@ -2,11 +2,13 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
+from app.core.code_gen_types import (
+    CODE_GEN_TYPE_HTML,
+    CODE_GEN_TYPE_MULTI_FILE,
+    CODE_GEN_TYPE_VUE_PROJECT,
+)
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
-
-CODE_GEN_TYPE_HTML = "html"
-CODE_GEN_TYPE_MULTI_FILE = "multi_file"
 
 
 class CodeParser(ABC):
@@ -39,9 +41,20 @@ class MultiFileCodeParser(CodeParser):
         return raw_text.strip()
 
 
+class VueProjectCodeParser(CodeParser):
+    code_gen_type = CODE_GEN_TYPE_VUE_PROJECT
+
+    def parse(self, raw_text: str) -> str:
+        return raw_text.strip()
+
+
 class CodeParserExecutor:
     def __init__(self, parsers: Sequence[CodeParser] | None = None) -> None:
-        parser_list = list(parsers) if parsers is not None else [HtmlCodeParser(), MultiFileCodeParser()]
+        parser_list = (
+            list(parsers)
+            if parsers is not None
+            else [HtmlCodeParser(), MultiFileCodeParser(), VueProjectCodeParser()]
+        )
         self._parsers = {parser.code_gen_type: parser for parser in parser_list}
 
     def parse(self, code_gen_type: str, raw_text: str) -> str:

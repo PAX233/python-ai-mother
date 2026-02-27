@@ -9,6 +9,7 @@ class AppAddRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     init_prompt: str | None = Field(default=None, alias="initPrompt")
+    code_gen_type: str | None = Field(default=None, alias="codeGenType")
 
 
 class AppUpdateRequest(BaseModel):
@@ -25,6 +26,7 @@ class AppAdminUpdateRequest(BaseModel):
     app_name: str | None = Field(default=None, alias="appName")
     cover: str | None = None
     priority: int | None = None
+    code_gen_type: str | None = Field(default=None, alias="codeGenType")
 
 
 class AppDeployRequest(BaseModel):

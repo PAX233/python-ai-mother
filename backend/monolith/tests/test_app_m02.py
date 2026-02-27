@@ -85,8 +85,8 @@ def test_codegen_facade_save_html_file() -> None:
             facade = AiCodeGeneratorFacade(settings)
             facade.ai_service = FakeAiService()  # type: ignore[assignment]
 
-            async def _run() -> list[str]:
-                chunks = []
+            async def _run() -> list[str | dict]:
+                chunks: list[str | dict] = []
                 async for item in facade.generate_and_save_code_stream(
                     app_id=123,
                     user_message="生成一个标题",
@@ -96,7 +96,9 @@ def test_codegen_facade_save_html_file() -> None:
                 return chunks
 
             chunks = asyncio.run(_run())
-            assert len(chunks) == 1
+            text_chunks = [item for item in chunks if isinstance(item, str)]
+            assert len(text_chunks) == 1
+            assert any(isinstance(item, dict) and item.get("type") == "tool" for item in chunks)
 
             output_file = Path(tmp_dir) / "html_123" / "index.html"
             assert output_file.exists()

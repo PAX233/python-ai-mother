@@ -1,15 +1,19 @@
 from collections.abc import AsyncIterator
+from pathlib import Path
+from typing import Any
 
 from app.ai.openai_compatible_service import OpenAICompatibleService
 from app.core.code_file_saver import CodeFileSaverExecutor
+from app.core.code_gen_types import (
+    CODE_GEN_TYPE_HTML,
+    CODE_GEN_TYPE_MULTI_FILE,
+    CODE_GEN_TYPE_VUE_PROJECT,
+)
 from app.core.code_parser import CodeParserExecutor
 from app.core.config import Settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.prompt_loader import load_prompt
-
-CODE_GEN_TYPE_HTML = "html"
-CODE_GEN_TYPE_MULTI_FILE = "multi_file"
 
 
 class AiCodeGeneratorFacade:
@@ -24,25 +28,43 @@ class AiCodeGeneratorFacade:
         app_id: int,
         user_message: str,
         code_gen_type: str,
-    ) -> AsyncIterator[str]:
+    ) -> AsyncIterator[str | dict[str, Any]]:
         prompt_name = self._resolve_prompt_name(code_gen_type)
         system_prompt = load_prompt(prompt_name)
 
+        yield self._tool_event("start", "llm.generate", "开始调用模型生成代码")
         chunks: list[str] = []
         async for chunk in self.ai_service.generate_stream(system_prompt=system_prompt, user_prompt=user_message):
             chunks.append(chunk)
             yield chunk
+        yield self._tool_event("end", "llm.generate", f"模型输出完成，累计 {sum(len(item) for item in chunks)} 字符")
 
         final_text = "".join(chunks).strip()
         if not final_text:
             raise BusinessException(ErrorCode.SYSTEM_ERROR, "LLM empty response")
 
+        yield self._tool_event("start", "parse.output", "开始解析生成内容")
         parsed_code = self.parser_executor.parse(code_gen_type=code_gen_type, raw_text=final_text)
-        self.saver_executor.save(
+        yield self._tool_event("end", "parse.output", f"解析完成，长度 {len(parsed_code)} 字符")
+
+        yield self._tool_event("start", "write.files", "开始落盘生成文件")
+        output_dir = self.saver_executor.save(
             code_gen_type=code_gen_type,
             app_id=app_id,
             parsed_code=parsed_code,
             settings=self.settings,
+        )
+        written_files = self._list_written_files(output_dir)
+        for index, file_path in enumerate(written_files, start=1):
+            yield self._tool_event(
+                "delta",
+                "write.files",
+                f"[{index}/{len(written_files)}] 已写入 {file_path}",
+            )
+        yield self._tool_event(
+            "end",
+            "write.files",
+            f"文件落盘完成，共 {len(written_files)} 个文件，目录 {output_dir.name}",
         )
 
     @staticmethod
@@ -51,4 +73,16 @@ class AiCodeGeneratorFacade:
             return "codegen-html-system-prompt.txt"
         if code_gen_type == CODE_GEN_TYPE_MULTI_FILE:
             return "codegen-multi-file-system-prompt.txt"
+        if code_gen_type == CODE_GEN_TYPE_VUE_PROJECT:
+            return "codegen-vue-project-system-prompt.txt"
         raise BusinessException(ErrorCode.PARAMS_ERROR, f"Unsupported code_gen_type: {code_gen_type}")
+
+    @staticmethod
+    def _tool_event(event: str, tool: str, message: str) -> dict[str, Any]:
+        return {"type": "tool", "event": event, "tool": tool, "message": message}
+
+    @staticmethod
+    def _list_written_files(output_dir: Path) -> list[str]:
+        if not output_dir.exists() or not output_dir.is_dir():
+            return []
+        return sorted(path.relative_to(output_dir).as_posix() for path in output_dir.rglob("*") if path.is_file())

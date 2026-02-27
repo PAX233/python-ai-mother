@@ -221,8 +221,11 @@ async def chat_to_gen_code(
                 user_message=user_prompt,
                 code_gen_type=app_entity.code_gen_type,
             ):
-                ai_chunks.append(chunk)
-                yield build_sse_data({"d": chunk})
+                if isinstance(chunk, str):
+                    ai_chunks.append(chunk)
+                    yield build_sse_data({"d": chunk})
+                else:
+                    yield build_sse_data(chunk)
             assistant_message = "".join(ai_chunks).strip()
             if assistant_message:
                 await chat_history_service.add_chat_message(
