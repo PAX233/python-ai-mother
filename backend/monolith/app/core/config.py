@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,6 +19,12 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = 86400
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"
+    llm_base_url: str = ""
+    llm_api_key: str = ""
+    llm_model_name: str = "gpt-4o-mini"
+    llm_stream: bool = True
+    llm_timeout_seconds: float = 180.0
+    generated_code_dir: str = "./generated"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -37,6 +44,16 @@ class Settings(BaseSettings):
         if normalized in {"debug", "dev", "development", "true", "1", "on", "yes"}:
             return True
         return value
+
+    @field_validator("llm_base_url", mode="before")
+    @classmethod
+    def normalize_llm_base_url(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        return value.strip().rstrip("/")
+
+    def generated_code_path(self) -> Path:
+        return Path(self.generated_code_dir).resolve()
 
 
 @lru_cache(maxsize=1)

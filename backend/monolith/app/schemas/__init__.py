@@ -1,3 +1,4 @@
+from app.schemas.app import AppAddRequest, AppVO, ChatToGenCodeParams
 from app.schemas.user import (
     DeleteRequest,
     LoginUserVO,
@@ -12,6 +13,9 @@ from app.schemas.user import (
 )
 
 __all__ = [
+    "AppAddRequest",
+    "AppVO",
+    "ChatToGenCodeParams",
     "DeleteRequest",
     "LoginUserVO",
     "PageUserVO",
