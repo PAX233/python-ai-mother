@@ -9,7 +9,7 @@
 ## 1.1 执行状态
 - M00：已完成并合并 `master`（合并提交：`202d2ce`）。
 - M01：已完成并合并 `master`（合并提交：`7cacc86`）。
-- M02：待开始（AI 应用生成初版）。
+- M02：进行中（当前分支：`temp/m02-20260227-ai-app`）。
 
 ## 2. 强制开发流程规范
 
@@ -188,9 +188,9 @@ python-ai-mother/
   - 前端只做 API 适配，不做无关重构
 
 ## 10. 立即执行项
-- [ ] 创建 M02 临时分支（命名：`temp/m02-yyyymmdd-ai-app`）
+- [x] 创建 M02 临时分支（命名：`temp/m02-yyyymmdd-ai-app`）
 - [ ] 对标 `2f783b3`、`6c38f1d` 梳理最小功能闭环
 - [ ] 完成 AI 模型接入与最小 Prompt 生成链路
 - [ ] 增加至少 1 条 M02 端到端 smoke test
-- [ ] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M02
+- [x] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M02
 
