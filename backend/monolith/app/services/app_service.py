@@ -7,6 +7,7 @@ from pathlib import Path
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.code_gen_types import CODE_GEN_TYPE_HTML, SUPPORTED_CODE_GEN_TYPES
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 from app.models.app import App
@@ -38,10 +39,11 @@ class AppService:
 
     async def add_app(self, db: AsyncSession, payload: AppAddRequest, login_user: User) -> int:
         app_name = self._build_app_name(payload.init_prompt)
+        code_gen_type = self._normalize_code_gen_type(payload.code_gen_type)
         new_app = App(
             app_name=app_name,
             init_prompt=(payload.init_prompt or "").strip() or None,
-            code_gen_type="html",
+            code_gen_type=code_gen_type,
             user_id=login_user.id,
         )
         db.add(new_app)
@@ -84,6 +86,8 @@ class AppService:
             app_entity.cover = payload.cover
         if payload.priority is not None:
             app_entity.priority = payload.priority
+        if payload.code_gen_type is not None:
+            app_entity.code_gen_type = self._normalize_code_gen_type(payload.code_gen_type)
         await db.commit()
         return True
 
@@ -254,6 +258,13 @@ class AppService:
         if not name:
             return "My App"
         return name[:32]
+
+    @staticmethod
+    def _normalize_code_gen_type(code_gen_type: str | None) -> str:
+        value = (code_gen_type or CODE_GEN_TYPE_HTML).strip()
+        if value not in SUPPORTED_CODE_GEN_TYPES:
+            raise BusinessException(ErrorCode.PARAMS_ERROR, f"Unsupported code_gen_type: {value}")
+        return value
 
     @staticmethod
     def _zip_directory_to_bytes(source_dir: Path) -> bytes:

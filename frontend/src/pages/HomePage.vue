@@ -6,6 +6,7 @@ import { useLoginUserStore } from '@/stores/loginUser'
 import { addApp, listMyAppVoByPage, listGoodAppVoByPage } from '@/api/appController'
 import { getDeployUrl } from '@/config/env'
 import AppCard from '@/components/AppCard.vue'
+import { CODE_GEN_TYPE_OPTIONS, CodeGenTypeEnum } from '@/utils/codeGenTypes'
 
 const router = useRouter()
 const loginUserStore = useLoginUserStore()
@@ -13,6 +14,7 @@ const loginUserStore = useLoginUserStore()
 // 用户提示词
 const userPrompt = ref('')
 const creating = ref(false)
+const selectedCodeGenType = ref<string>(CodeGenTypeEnum.VUE_PROJECT)
 
 // 我的应用数据
 const myApps = ref<API.AppVO[]>([])
@@ -54,6 +56,7 @@ const createApp = async () => {
   try {
     const res = await addApp({
       initPrompt: userPrompt.value.trim(),
+      codeGenType: selectedCodeGenType.value,
     })
 
     if (res.data.code === 0 && res.data.data) {
@@ -175,6 +178,11 @@ onMounted(() => {
           class="prompt-input"
         />
         <div class="input-actions">
+          <a-select
+            v-model:value="selectedCodeGenType"
+            :options="CODE_GEN_TYPE_OPTIONS"
+            style="width: 180px; margin-right: 12px"
+          />
           <a-button type="primary" size="large" @click="createApp" :loading="creating">
             <template #icon>
               <span>↑</span>

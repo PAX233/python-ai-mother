@@ -48,6 +48,23 @@
               加载更多历史消息
             </a-button>
           </div>
+          <div v-if="toolEvents.length > 0" class="tool-events-panel">
+            <div class="tool-events-title">工具调用流</div>
+            <div class="tool-events-list">
+              <div v-for="item in toolEvents" :key="item.id" class="tool-event-item">
+                <a-tag
+                  :color="
+                    item.event === 'start' ? 'blue' : item.event === 'end' ? 'green' : 'default'
+                  "
+                  size="small"
+                >
+                  {{ item.event.toUpperCase() }}
+                </a-tag>
+                <span class="tool-event-tool">{{ item.tool }}</span>
+                <span class="tool-event-msg">{{ item.message }}</span>
+              </div>
+            </div>
+          </div>
           <div v-for="(message, index) in messages" :key="index" class="message-item">
             <div v-if="message.type === 'user'" class="user-message">
               <div class="message-content">{{ message.content }}</div>
@@ -254,8 +271,15 @@ interface Message {
   loading?: boolean
   createTime?: string
 }
+interface ToolEventItem {
+  id: string
+  event: string
+  tool: string
+  message: string
+}
 
 const messages = ref<Message[]>([])
+const toolEvents = ref<ToolEventItem[]>([])
 const userInput = ref('')
 const isGenerating = ref(false)
 const messagesContainer = ref<HTMLElement>()
@@ -409,6 +433,7 @@ const fetchAppInfo = async () => {
 
 // 发送初始消息
 const sendInitialMessage = async (prompt: string) => {
+  toolEvents.value = []
   // 添加用户消息
   messages.value.push({
     type: 'user',
@@ -437,6 +462,7 @@ const sendMessage = async () => {
     return
   }
 
+  toolEvents.value = []
   let message = userInput.value.trim()
   // 如果有选中的元素，将元素信息添加到提示词中
   if (selectedElementInfo.value) {
@@ -512,6 +538,16 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       try {
         // 解析JSON包装的数据
         const parsed = JSON.parse(event.data)
+        if (parsed.type === 'tool') {
+          toolEvents.value.push({
+            id: `${Date.now()}-${toolEvents.value.length}`,
+            event: parsed.event || 'delta',
+            tool: parsed.tool || 'tool',
+            message: parsed.message || '',
+          })
+          scrollToBottom()
+          return
+        }
         const content = parsed.d
 
         // 拼接内容
@@ -897,6 +933,43 @@ onUnmounted(() => {
   text-align: center;
   padding: 8px 0;
   margin-bottom: 16px;
+}
+
+.tool-events-panel {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.tool-events-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.tool-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tool-event-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.tool-event-tool {
+  color: #334155;
+  font-weight: 500;
+}
+
+.tool-event-msg {
+  color: #64748b;
 }
 
 /* 输入区域 */
