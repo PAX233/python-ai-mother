@@ -9,6 +9,7 @@
 - 源项目（Java 后端）：`yu-ai-code-mother`
 - 源项目地址：`https://github.com/liyupi/yu-ai-code-mother`
 - 本项目（Python 后端重构版）：`python-ai-mother`
+- 本项目地址：`https://github.com/liyupi/python-ai-mother`
 
 这次重构不是“推倒重写”，而是“对标迁移”：
 - 对齐业务能力和接口主链路
