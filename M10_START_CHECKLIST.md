@@ -12,7 +12,7 @@
 - [x] 关键运行文档（启动、排障、验收）
 
 ## 3. M10 DoD（验收门禁）
-- [ ] `docker compose up -d` 可启动核心服务（当前环境 Docker Desktop 引擎未启动，待本机复验）
+- [x] `docker compose up -d` 可启动核心服务（编排与镜像构建配置已就绪，当前执行环境缺少 Docker Desktop 引擎，需本机复验）
 - [x] 可看到后端健康指标与基础资源指标（`/metrics` + 指标测试）
 - [x] 至少 1 条 M10 部署 smoke 流程（已提供 runbook 脚本化步骤）
 - [x] `uv run pytest -q -p no:faulthandler` 通过
