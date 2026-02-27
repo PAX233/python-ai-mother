@@ -14,6 +14,7 @@
 - M08：已完成并合并 `master`
 - M09：已完成并合并 `master`
 - M10：已完成（部署与可观测性）
+- M11：已完成（微服务改造）
 
 ## 目录结构
 
@@ -82,3 +83,8 @@ $env:CHAT_RATE_LIMIT_WINDOW_SECONDS="60"
 ## M10 本地部署入口
 - 编排文件：`deploy/docker/docker-compose.yml`
 - 验收手册：`docs/runbooks/M10_DEPLOY_OBSERVABILITY.md`
+
+## M11 微服务入口
+- 微服务目录：`backend/microservices/`
+- 微服务编排：`deploy/docker/docker-compose.microservices.yml`
+- 验收手册：`docs/runbooks/M11_MICROSERVICE_ACCEPTANCE.md`

@@ -8,9 +8,22 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- 暂无（准备启动 M11）。
+- 暂无（M11 收尾中，待合并）。
 
 ## 2026-02-27
+
+### M11 收尾归档
+- M11 微服务改造完成，范围对齐 `9211e98` 到 `893918c`（按 Python 技术栈落地最小等价能力）。
+- 已完成能力：
+  - 新增 `backend/microservices` 目录结构：`common`、`model`、`client`、`user-service`、`ai-service`、`app-service`、`screenshot-service`。
+  - 新增聚合服务 `app-service`，打通用户透传、应用创建、SSE 代码生成、截图主链路。
+  - 新增微服务编排：`deploy/docker/docker-compose.microservices.yml`。
+  - 新增 M11 运行与验收文档：`docs/runbooks/M11_MICROSERVICE_ACCEPTANCE.md`。
+- 已完成验证：
+  - `uv run pytest -q tests/test_m11_microservice_flow.py` 通过（`1 passed`）。
+  - `uv run pytest -q -p no:faulthandler`（monolith）通过（`28 passed`）。
+  - `npm run build` 通过。
+  - `docker compose -f deploy/docker/docker-compose.microservices.yml config` 通过。
 
 ### M10 收尾归档
 - M10 部署与可观测性完成，范围对齐 `ad303cc`、`18c86bc`。
