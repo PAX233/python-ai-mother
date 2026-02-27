@@ -8,11 +8,24 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- Git 流程修正：
-  - 已清理历史已合并的临时分支，当前仅保留 `master` 与 `temp/m10-20260227-deploy-observability`。
-  - 更新 `REFACTOR_PLAN.md`：同一里程碑必须在同一临时分支内完成开发、测试和收尾文档，禁止再拆 `doc-sync` 分支。
+- 暂无（准备启动 M11）。
 
 ## 2026-02-27
+
+### M10 收尾归档
+- M10 部署与可观测性完成，范围对齐 `ad303cc`、`18c86bc`。
+- 已完成能力：
+  - 新增容器化部署：`backend/monolith/Dockerfile`、`frontend/Dockerfile`、`deploy/docker/docker-compose.yml`。
+  - 新增监控采集：后端 `/metrics` 指标端点、Prometheus 抓取配置、Grafana 数据源与默认仪表盘。
+  - 新增部署文档：`deploy/docker/README.md`、`docs/runbooks/M10_DEPLOY_OBSERVABILITY.md`。
+  - 新增指标测试：`test_metrics_endpoint`。
+- 已完成验证：
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`28 passed`）。
+  - 前端构建：`npm run build` 通过。
+  - 编排校验：`docker compose config` 通过。
+  - 说明：当前执行环境未启动 Docker Desktop 引擎，`docker compose up -d` 需在本机复验。
+- 相关提交：
+  - `acc2f1f` `feat(m10): 完成容器化部署与可观测性基础能力`
 
 ### M09 收尾归档
 - M09 系统优化完成，范围对齐 `08cb772`、`1939024`、`2d32bb4`、`566d530`、`3e71e72`、`5d45f3a`、`b99d502`。
