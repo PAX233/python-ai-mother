@@ -24,6 +24,12 @@
             style="width: 120px"
             :disabled="isGenerating || !isOwner"
         />
+        <a-switch
+            v-model:checked="useWorkflowMode"
+            checked-children="工作流"
+            un-checked-children="直连"
+            :disabled="isGenerating || !isOwner"
+        />
         <a-button type="default" @click="openRollbackModal" :disabled="!isOwner">
           <template #icon>
             <HistoryOutlined />
@@ -364,6 +370,7 @@ const deployUrl = ref('')
 const downloading = ref(false)
 const capturingScreenshot = ref(false)
 const chatEditMode = ref<'full' | 'incremental'>('full')
+const useWorkflowMode = ref(false)
 const rollbackModalVisible = ref(false)
 const versionList = ref<API.AppVersionVO[]>([])
 const rollbackLoadingVersion = ref<number | null>(null)
@@ -589,7 +596,8 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       editMode: chatEditMode.value,
     })
 
-    const url = `${baseURL}/app/chat/gen/code?${params}`
+    const endpoint = useWorkflowMode.value ? '/app/chat/gen/workflow' : '/app/chat/gen/code'
+    const url = `${baseURL}${endpoint}?${params}`
 
     // 创建 EventSource 连接
     eventSource = new EventSource(url, {
@@ -610,6 +618,16 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
             id: `${Date.now()}-${toolEvents.value.length}`,
             event: parsed.event || 'delta',
             tool: parsed.tool || 'tool',
+            message: parsed.message || '',
+          })
+          scrollToBottom()
+          return
+        }
+        if (parsed.type === 'workflow') {
+          toolEvents.value.push({
+            id: `${Date.now()}-${toolEvents.value.length}`,
+            event: parsed.event || 'delta',
+            tool: `workflow:${parsed.node || 'node'}`,
             message: parsed.message || '',
           })
           scrollToBottom()
@@ -922,6 +940,9 @@ const getInputPlaceholder = () => {
   }
   if (selectedElementInfo.value) {
     return `正在编辑 ${selectedElementInfo.value.tagName.toLowerCase()} 元素，描述您想要的修改...`
+  }
+  if (useWorkflowMode.value) {
+    return '工作流模式：将按节点规划后再生成代码'
   }
   if (chatEditMode.value === 'incremental') {
     return '增量模式：描述你要修改的局部内容，系统会尽量只更新相关文件'
