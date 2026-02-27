@@ -8,17 +8,7 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- M04 启动：进入对话历史与会话增强阶段开发（对标 `092f62f`、`bc7aaac`、`55a5613`、`3818b73`、`94fdc9a`）。
-- M04 目标：对话历史持久化、历史查询、会话增强与前端联调。
-- M04 已创建开工清单：`M04_START_CHECKLIST.md`。
-- M04 已完成核心开发（待合并）：
-  - 新增 `chat_history` 模型、迁移与服务层，支持按应用查询历史和管理员分页检索
-  - 打通 `GET /api/chatHistory/app/{appId}` 与 `POST /api/chatHistory/admin/list/page/vo`
-  - `GET /api/app/chat/gen/code` 已接入 user / assistant 消息持久化
-  - 前端对话页增加历史读取边界（仅所有者或管理员加载历史）
-  - 新增集成测试 `tests/test_chat_history_m04.py`
-  - 验证通过：`uv run alembic upgrade head`、`uv run pytest -q -p no:faulthandler`（`18 passed`）、`npm run build`
-  - 补充对话页只读文案优化，避免非所有者误操作
+- 暂无（待启动 M05）。
 
 ## 2026-02-27
 
@@ -34,6 +24,24 @@
 ### 变更
 - M00 阶段已完成并合并到 `master`。
   - `202d2ce` `feat(m00): 完成初始化与基础依赖阶段`
+
+### M04 收尾归档
+- M04 对话历史与会话增强完成，范围对齐 `092f62f`、`bc7aaac`、`55a5613`、`3818b73`、`94fdc9a`。
+- 已完成能力：
+  - 新增 `chat_history` 模型、迁移、服务和接口，支持按应用查询历史与管理员分页检索
+  - 打通 `GET /api/chatHistory/app/{appId}` 与 `POST /api/chatHistory/admin/list/page/vo`
+  - `GET /api/app/chat/gen/code` 生成链路接入 user / assistant 消息持久化
+  - 前端对话页支持历史加载、游标分页与只读模式文案优化
+- 已完成验证：
+  - 数据迁移：`uv run alembic upgrade head` 通过
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`18 passed`）
+  - 前端构建：`npm run build` 通过
+- 相关提交：
+  - `648364b` `docs(m04): 完成开工准备与清单初始化`
+  - `132d70d` `feat(m04): 完成对话历史模块与生成链路持久化`
+  - `33ca8a9` `docs(m04): 完成清单收尾并优化只读文案`
+- M04 已按流程合并到 `master`。
+  - `74e635d` `merge(m04): 合并对话历史与会话增强重构成果`
 
 ### M03 收尾归档
 - M03 应用模块与部署完成，范围对齐 `868c65b`、`9112c1f`、`e05b173`、`44f81d6`、`fc48d1e`、`81eeda3`。
