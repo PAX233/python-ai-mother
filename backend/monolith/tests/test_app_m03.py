@@ -183,6 +183,10 @@ def test_app_deploy_and_download() -> None:
         assert get_body["code"] == int(ErrorCode.SUCCESS)
         assert get_body["data"]["deployKey"] == f"html_{app_id}"
 
+        static_resp = client.get(f"/api/static/html_{app_id}/")
+        assert static_resp.status_code == 200
+        assert "<html" in static_resp.text.lower()
+
         down_resp = client.get(f"/api/app/download/{app_id}")
         assert down_resp.status_code == 200
         assert "application/zip" in down_resp.headers.get("content-type", "")
