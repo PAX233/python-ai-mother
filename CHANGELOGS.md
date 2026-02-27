@@ -8,14 +8,25 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- M09 系统优化（对标第 11 期，临时分支：`temp/m09-20260227-optimize`）
+- 暂无（准备启动 M10）。
+
+## 2026-02-27
+
+### M09 收尾归档
+- M09 系统优化完成，范围对齐 `08cb772`、`1939024`、`2d32bb4`、`566d530`、`3e71e72`、`5d45f3a`、`b99d502`。
+- 已完成能力：
   - 并发与稳定性：`OpenAICompatibleService` 增加并发信号量控制和失败重试。
   - 安全与成本：Prompt 关键词审查 + 最大长度截断，避免高风险输入和过长提示词。
   - 限流：`/api/app/chat/gen/code`、`/api/app/chat/gen/workflow` 新增按用户限流保护。
   - 缓存：应用分页查询增加热点缓存，并在写操作后自动失效。
-  - 测试：新增 `tests/test_app_m09.py`，覆盖 Prompt 拦截与限流行为。
-
-## 2026-02-27
+  - 配置：新增 `LLM_RETRY_COUNT`、`AI_CONCURRENCY_LIMIT`、`LLM_MAX_PROMPT_CHARS`、`PROMPT_BLOCK_KEYWORDS`、`APP_QUERY_CACHE_TTL_SECONDS`、`CHAT_RATE_LIMIT_*`。
+- 已完成验证：
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`27 passed`）。
+  - 前端构建：`npm run build` 通过。
+- 相关提交：
+  - `e74a151` `feat(m09): 完成系统优化能力并补齐限流缓存测试`
+- M09 已按流程合并到 `master`。
+  - `d653f4a` `merge(m09): 合并系统优化阶段成果`
 
 ### M08 收尾归档
 - M08 AI 工作流完成，范围对齐 `f69f244`、`c755246`、`cd25d72`、`1ac37d8`、`62b5655`、`5dd51f0`、`c55d713`。
