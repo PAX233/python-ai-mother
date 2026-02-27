@@ -3,7 +3,9 @@ import asyncio
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
 from app.core.error_codes import ErrorCode
+from app.core.security import hash_password
 from app.db.base import metadata
 from app.main import app
 from app.models import User  # noqa: F401
@@ -48,6 +50,34 @@ def _drop_user_table() -> None:
             await conn.run_sync(lambda sync_conn: metadata.drop_all(sync_conn, tables=[User.__table__]))
 
     asyncio.run(_run())
+
+
+def _seed_admin_user(account: str = "admin_root", password: str = "adminPass123") -> None:
+    async def _run() -> None:
+        session_factory = app.state.resources.session_factory
+        if session_factory is None:
+            raise RuntimeError("session factory is not initialized")
+        settings = get_settings()
+        async with session_factory() as session:
+            user = User(
+                user_account=account,
+                user_password=hash_password(password, settings.password_salt),
+                user_name="admin",
+                user_role="admin",
+            )
+            session.add(user)
+            await session.commit()
+
+    asyncio.run(_run())
+
+
+def _login(client: TestClient, account: str, password: str) -> None:
+    response = client.post(
+        "/api/user/login",
+        json={"userAccount": account, "userPassword": password},
+    )
+    assert response.status_code == 200
+    assert response.json()["code"] == int(ErrorCode.SUCCESS)
 
 
 @pytest.fixture
@@ -122,3 +152,84 @@ def test_user_get_login_without_session(client: TestClient) -> None:
     payload = response.json()
     assert response.status_code == 200
     assert payload["code"] == int(ErrorCode.NOT_LOGIN_ERROR)
+
+
+def test_admin_crud_and_page_flow(client: TestClient) -> None:
+    _seed_admin_user()
+    _login(client, "admin_root", "adminPass123")
+
+    add_response = client.post(
+        "/api/user/add",
+        json={
+            "userAccount": "managed_user",
+            "userName": "Managed User",
+            "userRole": "user",
+        },
+    )
+    assert add_response.status_code == 200
+    add_payload = add_response.json()
+    assert add_payload["code"] == int(ErrorCode.SUCCESS)
+    managed_user_id = add_payload["data"]
+    assert isinstance(managed_user_id, int)
+
+    get_response = client.get("/api/user/get", params={"id": managed_user_id})
+    get_payload = get_response.json()
+    assert get_response.status_code == 200
+    assert get_payload["code"] == int(ErrorCode.SUCCESS)
+    assert get_payload["data"]["userAccount"] == "managed_user"
+
+    get_vo_response = client.get("/api/user/get/vo", params={"id": managed_user_id})
+    get_vo_payload = get_vo_response.json()
+    assert get_vo_response.status_code == 200
+    assert get_vo_payload["code"] == int(ErrorCode.SUCCESS)
+    assert get_vo_payload["data"]["userAccount"] == "managed_user"
+
+    update_response = client.post(
+        "/api/user/update",
+        json={"id": managed_user_id, "userName": "Managed User v2", "userRole": "admin"},
+    )
+    update_payload = update_response.json()
+    assert update_response.status_code == 200
+    assert update_payload["code"] == int(ErrorCode.SUCCESS)
+    assert update_payload["data"] is True
+
+    list_response = client.post(
+        "/api/user/list/page/vo",
+        json={"pageNum": 1, "pageSize": 10, "userAccount": "managed"},
+    )
+    list_payload = list_response.json()
+    assert list_response.status_code == 200
+    assert list_payload["code"] == int(ErrorCode.SUCCESS)
+    assert list_payload["data"]["totalRow"] >= 1
+    assert len(list_payload["data"]["records"]) >= 1
+
+    delete_response = client.post("/api/user/delete", json={"id": managed_user_id})
+    delete_payload = delete_response.json()
+    assert delete_response.status_code == 200
+    assert delete_payload["code"] == int(ErrorCode.SUCCESS)
+    assert delete_payload["data"] is True
+
+    after_delete_response = client.get("/api/user/get", params={"id": managed_user_id})
+    after_delete_payload = after_delete_response.json()
+    assert after_delete_response.status_code == 200
+    assert after_delete_payload["code"] == int(ErrorCode.NOT_FOUND_ERROR)
+
+
+def test_admin_api_requires_admin_role(client: TestClient) -> None:
+    client.post(
+        "/api/user/register",
+        json={
+            "userAccount": "normal_user",
+            "userPassword": "normalPass123",
+            "checkPassword": "normalPass123",
+        },
+    )
+    _login(client, "normal_user", "normalPass123")
+
+    response = client.post(
+        "/api/user/list/page/vo",
+        json={"pageNum": 1, "pageSize": 10},
+    )
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload["code"] == int(ErrorCode.NO_AUTH_ERROR)
