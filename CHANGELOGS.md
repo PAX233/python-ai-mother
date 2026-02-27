@@ -18,6 +18,7 @@
   - 前端对话页增加历史读取边界（仅所有者或管理员加载历史）
   - 新增集成测试 `tests/test_chat_history_m04.py`
   - 验证通过：`uv run alembic upgrade head`、`uv run pytest -q -p no:faulthandler`（`18 passed`）、`npm run build`
+  - 补充对话页只读文案优化，避免非所有者误操作
 
 ## 2026-02-27
 

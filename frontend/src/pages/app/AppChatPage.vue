@@ -111,7 +111,7 @@
         <!-- 用户消息输入框 -->
         <div class="input-container">
           <div class="input-wrapper">
-            <a-tooltip v-if="!isOwner" title="无法在别人的作品下对话哦~" placement="top">
+            <a-tooltip v-if="!isOwner" title="当前应用为只读模式，无法继续对话" placement="top">
               <a-textarea
                   v-model:value="userInput"
                   :placeholder="getInputPlaceholder()"
@@ -753,6 +753,9 @@ const clearSelectedElement = () => {
 }
 
 const getInputPlaceholder = () => {
+  if (!isOwner.value) {
+    return '当前应用为只读模式，可查看效果但不可继续对话'
+  }
   if (selectedElementInfo.value) {
     return `正在编辑 ${selectedElementInfo.value.tagName.toLowerCase()} 元素，描述您想要的修改...`
   }
