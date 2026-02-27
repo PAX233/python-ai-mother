@@ -8,7 +8,7 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- 暂无（M11 收尾中，待合并）。
+- 暂无（M00-M11 全部完成）。
 
 ## 2026-02-27
 
@@ -24,6 +24,11 @@
   - `uv run pytest -q -p no:faulthandler`（monolith）通过（`28 passed`）。
   - `npm run build` 通过。
   - `docker compose -f deploy/docker/docker-compose.microservices.yml config` 通过。
+- 相关提交：
+  - `3374b85` `feat(m11): 完成微服务拆分与跨服务主链路联调`
+  - `af21834` `chore(m11): 清理测试产物并固定截图目录忽略规则`
+- M11 已按流程合并到 `master`。
+  - `6df934b` `merge(m11): 合并微服务改造阶段成果`
 
 ### M10 收尾归档
 - M10 部署与可观测性完成，范围对齐 `ad303cc`、`18c86bc`。
