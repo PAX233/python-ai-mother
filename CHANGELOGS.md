@@ -8,17 +8,7 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- M05 启动：进入工程项目生成阶段开发（对标 `19b1bcd`、`1695a3a`、`845a82c`、`76df070`）。
-- M05 目标：多文件工程生成、工具调用流式输出、工程浏览部署与前端对接。
-- M05 已创建开工清单：`M05_START_CHECKLIST.md`。
-- M05 已完成首轮实现（待收尾合并）：
-  - 新增 `vue_project` 生成模式，支持创建应用时选择 `codeGenType`
-  - 多文件解析与落盘增强：支持 `file:<path>` 块格式、目录安全校验、`{code_gen_type}_{app_id}` 目录约定
-  - 新增 Vue 工程提示词：`codegen-vue-project-system-prompt.txt`
-  - `chat/gen/code` 增加工具事件流（start / delta / end）并保持文本流兼容
-  - 前端对话页新增“工具调用流”展示，首页新增生成模式选择
-  - 新增 M05 集成测试：`tests/test_app_m05.py`
-  - 门禁通过：`uv run pytest -q -p no:faulthandler`（`20 passed`）、`npm run build`
+- 暂无（待启动 M06）。
 
 ## 2026-02-27
 
@@ -34,6 +24,23 @@
 ### 变更
 - M00 阶段已完成并合并到 `master`。
   - `202d2ce` `feat(m00): 完成初始化与基础依赖阶段`
+
+### M05 收尾归档
+- M05 工程项目生成完成，范围对齐 `19b1bcd`、`1695a3a`、`845a82c`、`76df070`。
+- 已完成能力：
+  - 新增 `vue_project` 生成模式，支持创建应用时选择 `codeGenType`
+  - 多文件解析与落盘增强：支持 `file:<path>` 块格式、目录安全校验、`{code_gen_type}_{app_id}` 目录约定
+  - 新增 Vue 工程提示词：`codegen-vue-project-system-prompt.txt`
+  - `chat/gen/code` 增加工具事件流（start / delta / end）并保持文本流兼容
+  - 前端对话页新增“工具调用流”展示，首页新增生成模式选择
+- 已完成验证：
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`20 passed`）
+  - 前端构建：`npm run build` 通过
+- 相关提交：
+  - `90b4811` `docs(m05): 完成开工准备与清单初始化`
+  - `7ff0283` `feat(m05): 打通工程项目生成与工具流展示`
+- M05 已按流程合并到 `master`。
+  - `304551c` `merge(m05): 合并工程项目生成重构成果`
 
 ### M04 收尾归档
 - M04 对话历史与会话增强完成，范围对齐 `092f62f`、`bc7aaac`、`55a5613`、`3818b73`、`94fdc9a`。
