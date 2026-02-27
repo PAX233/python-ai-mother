@@ -10,6 +10,7 @@ from app.core.exceptions import BusinessException
 from app.core.ai_codegen_facade import AiCodeGeneratorFacade
 from app.models.user import User
 from app.services.app_service import AppService
+from app.services.chat_history_service import ChatHistoryService
 from app.services.session_service import SessionService
 from app.services.user_service import UserService
 
@@ -39,6 +40,10 @@ def get_user_service(
 
 def get_app_service() -> AppService:
     return AppService()
+
+
+def get_chat_history_service() -> ChatHistoryService:
+    return ChatHistoryService()
 
 
 def get_ai_codegen_facade(settings: Settings = Depends(get_app_settings)) -> AiCodeGeneratorFacade:

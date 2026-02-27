@@ -15,6 +15,7 @@ from app.dependencies import (
     get_ai_codegen_facade,
     get_app_service,
     get_app_settings,
+    get_chat_history_service,
     get_db_session,
     get_login_user,
     require_role,
@@ -31,6 +32,11 @@ from app.schemas.app import (
 )
 from app.schemas.user import DeleteRequest
 from app.services.app_service import AppService
+from app.services.chat_history_service import (
+    MESSAGE_TYPE_ASSISTANT,
+    MESSAGE_TYPE_USER,
+    ChatHistoryService,
+)
 from app.services.user_service import USER_ROLE_ADMIN
 
 logger = logging.getLogger(__name__)
@@ -188,24 +194,44 @@ async def chat_to_gen_code(
     login_user: User = Depends(get_login_user),
     db: AsyncSession = Depends(get_db_session),
     app_service: AppService = Depends(get_app_service),
+    chat_history_service: ChatHistoryService = Depends(get_chat_history_service),
     ai_facade: AiCodeGeneratorFacade = Depends(get_ai_codegen_facade),
 ) -> StreamingResponse:
     app_entity = await app_service.get_app_entity_by_id(db, app_id)
     if app_entity.user_id != login_user.id and login_user.user_role != USER_ROLE_ADMIN:
         raise BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission")
 
-    user_prompt = message.strip()
+    user_message = message.strip()
+    user_prompt = user_message
     if app_entity.init_prompt:
         user_prompt = f"{app_entity.init_prompt}\n\n{user_prompt}"
 
     async def _stream() -> AsyncIterator[str]:
         try:
+            await chat_history_service.add_chat_message(
+                db,
+                app_id=app_entity.id,
+                user_id=login_user.id,
+                message_type=MESSAGE_TYPE_USER,
+                message=user_message,
+            )
+            ai_chunks: list[str] = []
             async for chunk in ai_facade.generate_and_save_code_stream(
                 app_id=app_entity.id,
                 user_message=user_prompt,
                 code_gen_type=app_entity.code_gen_type,
             ):
+                ai_chunks.append(chunk)
                 yield build_sse_data({"d": chunk})
+            assistant_message = "".join(ai_chunks).strip()
+            if assistant_message:
+                await chat_history_service.add_chat_message(
+                    db,
+                    app_id=app_entity.id,
+                    user_id=login_user.id,
+                    message_type=MESSAGE_TYPE_ASSISTANT,
+                    message=assistant_message,
+                )
             yield build_sse_event("done", "done")
         except BusinessException as exc:
             yield build_sse_event(

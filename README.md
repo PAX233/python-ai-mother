@@ -7,6 +7,7 @@
 - M01：已完成并合并 `master`
 - M02：已完成并合并 `master`
 - M03：已完成并合并 `master`
+- M04：开发中（对话历史 + Redis Session）
 
 ## 目录结构
 

@@ -8,7 +8,17 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- 暂无（待启动 M04）。
+- M04 启动：进入对话历史与会话增强阶段开发（对标 `092f62f`、`bc7aaac`、`55a5613`、`3818b73`、`94fdc9a`）。
+- M04 目标：对话历史持久化、历史查询、会话增强与前端联调。
+- M04 已创建开工清单：`M04_START_CHECKLIST.md`。
+- M04 已完成核心开发（待合并）：
+  - 新增 `chat_history` 模型、迁移与服务层，支持按应用查询历史和管理员分页检索
+  - 打通 `GET /api/chatHistory/app/{appId}` 与 `POST /api/chatHistory/admin/list/page/vo`
+  - `GET /api/app/chat/gen/code` 已接入 user / assistant 消息持久化
+  - 前端对话页增加历史读取边界（仅所有者或管理员加载历史）
+  - 新增集成测试 `tests/test_chat_history_m04.py`
+  - 验证通过：`uv run alembic upgrade head`、`uv run pytest -q -p no:faulthandler`（`18 passed`）、`npm run build`
+  - 补充对话页只读文案优化，避免非所有者误操作
 
 ## 2026-02-27
 
