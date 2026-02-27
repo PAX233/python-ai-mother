@@ -8,6 +8,7 @@ from app.schemas.app import (
     ChatToGenCodeParams,
     PageAppVO,
 )
+from app.schemas.chat_history import ChatHistoryQueryRequest, ChatHistoryVO, PageChatHistory
 from app.schemas.user import (
     DeleteRequest,
     LoginUserVO,
@@ -30,6 +31,9 @@ __all__ = [
     "AppVO",
     "ChatToGenCodeParams",
     "PageAppVO",
+    "ChatHistoryQueryRequest",
+    "ChatHistoryVO",
+    "PageChatHistory",
     "DeleteRequest",
     "LoginUserVO",
     "PageUserVO",

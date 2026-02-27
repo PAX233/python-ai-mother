@@ -6,18 +6,18 @@
 - [x] `REFACTOR_PLAN.md` 与 `CHANGELOGS.md` 已切换到 M04 状态
 
 ## 2. M04 对标范围（对标第 6 期）
-- [ ] 对标提交 `092f62f`：对话历史模块（后端基础能力）
-  - [ ] 新增对话历史实体 / Schema / Service / API
-  - [ ] 按应用查询对话历史能力打通
-- [ ] 对标提交 `bc7aaac`：对话历史模块（前端）
-  - [ ] 前端对话页加载历史消息
-  - [ ] 管理端对话历史分页查询对接
-- [ ] 对标提交 `55a5613`：对话记忆持久化
-  - [ ] 生成链路中持久化 user/ai 消息
-  - [ ] 支持基于游标（lastCreateTime）加载更多历史
-- [ ] 对标提交 `3818b73`：增加 Redis Session
-  - [ ] 校验会话在 Redis 下稳定可用
-  - [ ] 历史接口鉴权与会话边界补齐
+- [x] 对标提交 `092f62f`：对话历史模块（后端基础能力）
+  - [x] 新增对话历史实体 / Schema / Service / API
+  - [x] 按应用查询对话历史能力打通
+- [x] 对标提交 `bc7aaac`：对话历史模块（前端）
+  - [x] 前端对话页加载历史消息
+  - [x] 管理端对话历史分页查询对接
+- [x] 对标提交 `55a5613`：对话记忆持久化
+  - [x] 生成链路中持久化 user/ai 消息
+  - [x] 支持基于游标（lastCreateTime）加载更多历史
+- [x] 对标提交 `3818b73`：增加 Redis Session
+  - [x] 校验会话在 Redis 下稳定可用
+  - [x] 历史接口鉴权与会话边界补齐
 - [ ] 对标提交 `94fdc9a`：前端文案修复
   - [ ] 前端交互文案与提示优化
   - [ ] 页面细节回归检查
@@ -28,13 +28,13 @@
 3. 最后完成前端历史联调与文案修复
 
 ## 4. M04 DoD（验收门禁）
-- [ ] `GET /api/chatHistory/app/{appId}` 可用
-- [ ] `POST /api/chatHistory/admin/list/page/vo` 可用
-- [ ] 对话生成后可查询到 user/ai 历史消息
-- [ ] 刷新后历史可恢复并支持继续对话
-- [ ] `uv run pytest -q -p no:faulthandler` 通过
-- [ ] `npm run build` 通过
-- [ ] `CHANGELOGS.md` 已更新
+- [x] `GET /api/chatHistory/app/{appId}` 可用
+- [x] `POST /api/chatHistory/admin/list/page/vo` 可用
+- [x] 对话生成后可查询到 user/ai 历史消息
+- [x] 刷新后历史可恢复并支持继续对话
+- [x] `uv run pytest -q -p no:faulthandler` 通过
+- [x] `npm run build` 通过
+- [x] `CHANGELOGS.md` 已更新
 - [ ] 提交信息使用中文
 
 ## 5. 推荐提交拆分（中文）

@@ -1,4 +1,4 @@
-# Python AI Mother 重构计划（强对标 yu-ai Git 历史）
+﻿# Python AI Mother 重构计划（强对标 yu-ai Git 历史）
 
 ## 1. 重构目标
 - 在 `python-ai-mother` 中重建与 `yu-ai-code-mother` 功能等价的系统。
@@ -191,9 +191,11 @@ python-ai-mother/
 
 ## 10. 立即执行项
 - [x] 创建 M04 临时分支（命名：`temp/m04-yyyymmdd-chat-history`）
-- [ ] 完成对话历史后端模型、接口与鉴权闭环
-- [ ] 完成对话记忆持久化与游标分页能力
-- [ ] 完成前端历史对接与文案修复
+- [x] 完成对话历史后端模型、接口与鉴权闭环
+- [x] 完成对话记忆持久化与游标分页能力
+- [x] 完成前端历史对接与会话边界适配
+- [ ] 完成前端文案修复与细节回归
 - [ ] 增加至少 1 条 M04 端到端 smoke test
 - [x] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M04
+
 

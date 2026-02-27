@@ -374,8 +374,14 @@ const fetchAppInfo = async () => {
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
 
-      // 先加载对话历史
-      await loadChatHistory()
+      // 仅应用所有者或管理员可读取对话历史
+      if (isOwner.value || isAdmin.value) {
+        await loadChatHistory()
+      } else {
+        historyLoaded.value = true
+        hasMoreHistory.value = false
+        messages.value = []
+      }
       // 如果有至少2条对话记录，展示对应的网站
       if (messages.value.length >= 2) {
         updatePreview()
