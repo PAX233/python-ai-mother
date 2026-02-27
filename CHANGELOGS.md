@@ -8,20 +8,33 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- M00：初始化 FastAPI 单体后端骨架（`backend/monolith/app`、`backend/monolith/tests`）。
-- M00：新增统一响应模型、错误码定义、业务异常与全局异常处理。
-- M00：新增健康检查接口 `GET /api/health/`。
-- M00：补充日志中间件、CORS 配置、资源管理器（SQLAlchemy/Redis 初始化骨架）。
-- M00：补充 `.env.example` 与 `backend/monolith/README.md`。
-- M00：补充 Alembic 迁移骨架（`migrations/`、`alembic.ini`）并验证 `alembic current` 可执行。
-- M00：新增本地启动/测试脚本（`scripts/run_dev.ps1`、`scripts/run_test.ps1`）。
-- M00：补充统一响应文档（`docs/api/response_contract.md`）。
-- M00：扩展测试覆盖参数校验与业务异常处理，并通过 `uv run pytest`（3 passed）。
-- M00：引入原前端工程到 `frontend/`，保持技术栈不变。
-- M00：完成前端 baseURL 适配（`/api` + Vite 代理 `8123`），并通过 `npm run build`。
-- M00：完成验收记录（`docs/runbooks/M00_ACCEPTANCE.md`），准备提合并申请。
-- 规范升级：强制“临时分支开发 -> 验收通过 -> 合并 master”流程。
-- 规范升级：提交说明使用中文描述。
+- （暂无）
+
+## 2026-02-27
+
+### 新增
+- 引入前端工程到 `frontend/`，保持原技术栈。
+  - `7909720` `feat(m00): 引入前端工程并完成baseURL适配`
+- 新增仓库根 README，补齐项目入口说明。
+  - `68150ce` `docs(m00): 补充仓库根README说明`
+- 新增 M00 验收记录与前端 baseURL 适配记录。
+  - `c90553b` `docs(m00): 完成验收记录并准备提合并`
+  - `d8dd299` `docs(m00): 更新前端联通验收与清单状态`
+
+### 变更
+- M00 阶段已完成并合并到 `master`。
+  - `202d2ce` `feat(m00): 完成初始化与基础依赖阶段`
+
+### M01 收尾归档
+- M01 用户模块与管理员能力已完成，并通过自动化与人工验收。
+  - `31dd5c1` `feat(m01): 完成用户注册登录与会话鉴权`
+  - `390b1b2` `test(m01): 增加用户模块接口集成测试`
+  - `b158be0` `docs(m01): 更新验收清单与阶段文档`
+  - `11f54d3` `feat(m01): 补齐管理员用户CRUD与分页接口`
+  - `6bcc799` `test(m01): 增加管理员接口权限与分页测试`
+  - `291b1a1` `docs(m01): 更新管理员模块对标与验收记录`
+- M01 对标结论：`c96ffa8`、`d52f335`、`55ab6c7` 已全部对齐。
+- M01 人工测试状态：Postman 全链路通过（用户 + 管理员 + 权限负例）。
 
 ## 2026-02-26
 
@@ -32,6 +45,11 @@
   - `a3ad0e5` `docs: add CHANGELOGS.md with initial history`
 - 新增 M00 开工清单。
   - `4d26bab` `docs(m00): 完成计划终检并新增开工清单`
+- 初始化 FastAPI 单体骨架与健康检查。
+  - `858063e` `feat(m00): 初始化FastAPI单体骨架与健康检查`
+- 增加中间件、资源管理器、Alembic 骨架和开发脚本。
+  - `00488ad` `feat(m00): 补充中间件与资源管理骨架`
+  - `898b17b` `feat(m00): 增加迁移骨架与开发脚本`
 
 ### 变更
 - 强制项目内 Python 虚拟环境策略，统一使用 `uv`。
@@ -40,3 +58,7 @@
   - `8f9bded` `docs: optimize refactor roadmap aligned to yu-ai git milestones`
 - 固化分支流程规范，并将重构计划与日志改为中文维护。
   - `62a9cc7` `docs: 规范分支流程并改为中文提交与日志`
+- 补充统一响应文档、验收清单与日志。
+  - `72b9c1e` `docs(m00): 更新进行中日志与开工清单`
+  - `e4d0ea5` `docs(m00): 补充统一响应文档与验收清单`
+

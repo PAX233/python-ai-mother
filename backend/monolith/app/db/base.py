@@ -1,7 +1,8 @@
 from sqlalchemy import MetaData
+from sqlalchemy.orm import DeclarativeBase
 
 # Keep naming conventions stable to reduce migration diff noise.
-metadata = MetaData(
+convention_metadata = MetaData(
     naming_convention={
         "ix": "ix_%(column_0_label)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -10,4 +11,11 @@ metadata = MetaData(
         "pk": "pk_%(table_name)s",
     }
 )
+
+
+class Base(DeclarativeBase):
+    metadata = convention_metadata
+
+
+metadata = convention_metadata
 

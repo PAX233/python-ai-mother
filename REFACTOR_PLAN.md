@@ -6,6 +6,11 @@
 - 后端全部替换为 Python 技术栈。
 - 实施顺序严格对标原仓库 Git 历史：先单体，后微服务。
 
+## 1.1 执行状态
+- M00：已完成并合并 `master`（合并提交：`202d2ce`）。
+- M01：已完成（用户模块 + 管理员 CRUD/分页 + 人工验收）。
+- M02：待开始（AI 应用生成初版）。
+
 ## 2. 强制开发流程规范
 
 ### 2.1 分支规范（强制）
@@ -117,10 +122,10 @@ python-ai-mother/
   - user/admin 权限
   - Redis Session
 - DoD：
-  - `POST /user/register` 可用
-  - `POST /user/login` 可用
-  - `GET /user/get/login` 可用
-  - `POST /user/logout` 可用
+  - `POST /api/user/register` 可用
+  - `POST /api/user/login` 可用
+  - `GET /api/user/get/login` 可用
+  - `POST /api/user/logout` 可用
 
 ### M02 AI 应用生成初版（对标第4期）
 - 范围：模型接入、Prompt 加载、最小生成链路
@@ -183,9 +188,9 @@ python-ai-mother/
   - 前端只做 API 适配，不做无关重构
 
 ## 10. 立即执行项
-- [ ] 在临时分支创建 `backend/monolith` 初始骨架
-- [ ] 实现统一响应与错误码
-- [ ] 提供 `/health` 接口并联通前端
-- [ ] 更新 `CHANGELOGS.md` 的 `进行中` 区块
-- [ ] 自测通过后发起合并到 `master` 的验收
+- [ ] 创建 M02 临时分支（命名：`temp/m02-yyyymmdd-ai-app`）
+- [ ] 对标 `2f783b3`、`6c38f1d` 梳理最小功能闭环
+- [ ] 完成 AI 模型接入与最小 Prompt 生成链路
+- [ ] 增加至少 1 条 M02 端到端 smoke test
+- [ ] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M02
 
