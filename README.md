@@ -13,6 +13,7 @@
 - M07：已完成并合并 `master`
 - M08：已完成并合并 `master`
 - M09：已完成并合并 `master`
+- M10：开发中（部署与可观测性）
 
 ## 目录结构
 
@@ -77,3 +78,7 @@ $env:CHAT_RATE_LIMIT_WINDOW_SECONDS="60"
 - 所有开发必须在临时分支进行
 - 验收通过后再合并 `master`
 - commit 描述与 `CHANGELOGS.md` 统一使用中文
+
+## M10 本地部署入口
+- 编排文件：`deploy/docker/docker-compose.yml`
+- 验收手册：`docs/runbooks/M10_DEPLOY_OBSERVABILITY.md`

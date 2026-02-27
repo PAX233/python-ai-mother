@@ -8,7 +8,11 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- 暂无（准备启动 M10）。
+- M10 部署与可观测性（对标第 12-13 期，分支：`temp/m10-20260227-deploy-observability`）
+  - 新增容器化：`backend/monolith/Dockerfile`、`frontend/Dockerfile`、`deploy/docker/docker-compose.yml`。
+  - 新增监控：后端 `/metrics` 指标端点，Prometheus 抓取配置，Grafana 自动数据源与仪表盘。
+  - 新增运行文档：`docs/runbooks/M10_DEPLOY_OBSERVABILITY.md`（启动、验证、清理流程）。
+  - 新增测试：`test_metrics_endpoint`，验证指标端点可用。
 
 ## 2026-02-27
 

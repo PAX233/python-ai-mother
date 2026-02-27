@@ -45,3 +45,11 @@ def test_business_exception_handler() -> None:
     assert response.status_code == 200
     assert payload["code"] == int(ErrorCode.PARAMS_ERROR)
     assert payload["message"] == "业务异常测试"
+
+def test_metrics_endpoint() -> None:
+    client = TestClient(app)
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "python_ai_mother_http_requests_total" in response.text
+    assert "python_ai_mother_http_request_duration_seconds" in response.text

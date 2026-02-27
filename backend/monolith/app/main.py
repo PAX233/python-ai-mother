@@ -8,6 +8,7 @@ from app.api.router import api_router
 from app.core.config import get_settings
 from app.core.exception_handlers import register_exception_handlers
 from app.core.logging_config import configure_logging
+from app.core.metrics import register_metrics
 from app.core.middleware import register_middlewares
 from app.core.resources import ResourceManager
 
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     register_middlewares(fastapi_app, settings)
+    register_metrics(fastapi_app)
     register_exception_handlers(fastapi_app)
     fastapi_app.include_router(api_router, prefix=settings.api_prefix)
     fastapi_app.mount(

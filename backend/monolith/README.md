@@ -105,3 +105,10 @@ $env:CHAT_RATE_LIMIT_WINDOW_SECONDS="60"
 - 安全：Prompt 违规关键词拦截 + 长度截断（`PROMPT_BLOCK_KEYWORDS`、`LLM_MAX_PROMPT_CHARS`）
 - 限流：`/api/app/chat/gen/code`、`/api/app/chat/gen/workflow` 按用户限流（`CHAT_RATE_LIMIT_*`）
 - 缓存：应用分页查询增加热点缓存（`APP_QUERY_CACHE_TTL_SECONDS`）
+
+## 12. M10 监控指标
+
+- 指标端点：`GET /metrics`
+- 关键指标：
+  - `python_ai_mother_http_requests_total`
+  - `python_ai_mother_http_request_duration_seconds_*`
