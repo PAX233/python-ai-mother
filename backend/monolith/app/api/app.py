@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.codegen_routing_service import AiCodeGenTypeRoutingService
 from app.core.ai_codegen_facade import AiCodeGeneratorFacade
 from app.core.config import Settings
+from app.core.edit_modes import EDIT_MODE_FULL
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.response import BaseResponse, success_response
@@ -33,6 +34,9 @@ from app.schemas.app import (
     AppRouteCodeGenResult,
     AppScreenshotRequest,
     AppUpdateRequest,
+    AppVersionRollbackRequest,
+    AppVersionSnapshotRequest,
+    AppVersionVO,
     AppVO,
     PageAppVO,
 )
@@ -253,11 +257,69 @@ async def capture_app_screenshot(
     return success_response(screenshot_url)
 
 
+@router.post("/version/snapshot", response_model=BaseResponse[AppVersionVO])
+async def create_app_version_snapshot(
+    payload: AppVersionSnapshotRequest,
+    login_user: User = Depends(get_login_user),
+    settings: Settings = Depends(get_app_settings),
+    db: AsyncSession = Depends(get_db_session),
+    app_service: AppService = Depends(get_app_service),
+) -> BaseResponse[AppVersionVO]:
+    app_id = payload.app_id or 0
+    snapshot = await app_service.create_version_snapshot(
+        db=db,
+        app_id=app_id,
+        login_user=login_user,
+        generated_root=settings.generated_code_path(),
+        message=payload.message,
+        edit_mode=payload.edit_mode,
+    )
+    return success_response(snapshot)
+
+
+@router.get("/version/list", response_model=BaseResponse[list[AppVersionVO]])
+async def list_app_versions(
+    app_id: int = Query(alias="appId", gt=0),
+    login_user: User = Depends(get_login_user),
+    settings: Settings = Depends(get_app_settings),
+    db: AsyncSession = Depends(get_db_session),
+    app_service: AppService = Depends(get_app_service),
+) -> BaseResponse[list[AppVersionVO]]:
+    versions = await app_service.list_version_snapshots(
+        db=db,
+        app_id=app_id,
+        login_user=login_user,
+        generated_root=settings.generated_code_path(),
+    )
+    return success_response(versions)
+
+
+@router.post("/version/rollback", response_model=BaseResponse[bool])
+async def rollback_app_version(
+    payload: AppVersionRollbackRequest,
+    login_user: User = Depends(get_login_user),
+    settings: Settings = Depends(get_app_settings),
+    db: AsyncSession = Depends(get_db_session),
+    app_service: AppService = Depends(get_app_service),
+) -> BaseResponse[bool]:
+    app_id = payload.app_id or 0
+    result = await app_service.rollback_to_version(
+        db=db,
+        app_id=app_id,
+        version=payload.version,
+        login_user=login_user,
+        generated_root=settings.generated_code_path(),
+    )
+    return success_response(result)
+
+
 @router.get("/chat/gen/code")
 async def chat_to_gen_code(
     app_id: int = Query(alias="appId", gt=0),
     message: str = Query(min_length=1),
+    edit_mode: str = Query(alias="editMode", default=EDIT_MODE_FULL),
     login_user: User = Depends(get_login_user),
+    settings: Settings = Depends(get_app_settings),
     db: AsyncSession = Depends(get_db_session),
     app_service: AppService = Depends(get_app_service),
     chat_history_service: ChatHistoryService = Depends(get_chat_history_service),
@@ -266,6 +328,7 @@ async def chat_to_gen_code(
     app_entity = await app_service.get_app_entity_by_id(db, app_id)
     if app_entity.user_id != login_user.id and login_user.user_role != USER_ROLE_ADMIN:
         raise BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission")
+    normalized_edit_mode = app_service.normalize_edit_mode(edit_mode)
 
     user_message = message.strip()
     user_prompt = user_message
@@ -286,6 +349,7 @@ async def chat_to_gen_code(
                 app_id=app_entity.id,
                 user_message=user_prompt,
                 code_gen_type=app_entity.code_gen_type,
+                edit_mode=normalized_edit_mode,
             ):
                 if isinstance(chunk, str):
                     ai_chunks.append(chunk)
@@ -301,6 +365,17 @@ async def chat_to_gen_code(
                     message_type=MESSAGE_TYPE_ASSISTANT,
                     message=assistant_message,
                 )
+            try:
+                await app_service.create_version_snapshot(
+                    db=db,
+                    app_id=app_entity.id,
+                    login_user=login_user,
+                    generated_root=settings.generated_code_path(),
+                    message=user_message,
+                    edit_mode=normalized_edit_mode,
+                )
+            except BusinessException as snapshot_exc:
+                logger.warning("Create version snapshot skipped: %s", snapshot_exc.message)
             yield build_sse_event("done", "done")
         except BusinessException as exc:
             yield build_sse_event(

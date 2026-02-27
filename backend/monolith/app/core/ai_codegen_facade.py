@@ -11,6 +11,7 @@ from app.core.code_gen_types import (
 )
 from app.core.code_parser import CodeParserExecutor
 from app.core.config import Settings
+from app.core.edit_modes import EDIT_MODE_INCREMENTAL
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.prompt_loader import load_prompt
@@ -28,13 +29,15 @@ class AiCodeGeneratorFacade:
         app_id: int,
         user_message: str,
         code_gen_type: str,
+        edit_mode: str,
     ) -> AsyncIterator[str | dict[str, Any]]:
         prompt_name = self._resolve_prompt_name(code_gen_type)
         system_prompt = load_prompt(prompt_name)
+        final_user_message = self._build_edit_mode_message(user_message, edit_mode)
 
         yield self._tool_event("start", "llm.generate", "开始调用模型生成代码")
         chunks: list[str] = []
-        async for chunk in self.ai_service.generate_stream(system_prompt=system_prompt, user_prompt=user_message):
+        async for chunk in self.ai_service.generate_stream(system_prompt=system_prompt, user_prompt=final_user_message):
             chunks.append(chunk)
             yield chunk
         yield self._tool_event("end", "llm.generate", f"模型输出完成，累计 {sum(len(item) for item in chunks)} 字符")
@@ -53,6 +56,7 @@ class AiCodeGeneratorFacade:
             app_id=app_id,
             parsed_code=parsed_code,
             settings=self.settings,
+            edit_mode=edit_mode,
         )
         written_files = self._list_written_files(output_dir)
         for index, file_path in enumerate(written_files, start=1):
@@ -86,3 +90,16 @@ class AiCodeGeneratorFacade:
         if not output_dir.exists() or not output_dir.is_dir():
             return []
         return sorted(path.relative_to(output_dir).as_posix() for path in output_dir.rglob("*") if path.is_file())
+
+    @staticmethod
+    def _build_edit_mode_message(user_message: str, edit_mode: str) -> str:
+        content = user_message.strip()
+        if edit_mode == EDIT_MODE_INCREMENTAL:
+            return (
+                f"{content}\n\n"
+                "请采用增量修改模式：仅输出需要变更的文件，使用 ```file:<相对路径> ... ``` 代码块格式。"
+            )
+        return (
+            f"{content}\n\n"
+            "请采用全量修改模式：输出完整结果（而不是只输出差异）。"
+        )

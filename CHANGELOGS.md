@@ -8,9 +8,25 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- 暂无（待启动 M07）。
+- M07 可视化修改：收尾中（待合并 `master`）。
 
 ## 2026-02-27
+
+### M07 收尾归档（进行中）
+- M07 可视化修改完成，范围对齐 `cce4ad1`、`e05c04c`、`89c7725`。
+- 已完成能力：
+  - 新增编辑模式：`full`（全量）和 `incremental`（增量），并接入 `GET /api/app/chat/gen/code` 的 `editMode` 参数。
+  - 生成落盘器支持两种模式：全量模式覆盖输出目录；增量模式仅更新涉及文件。
+  - 新增版本快照与回滚接口：
+    - `POST /api/app/version/snapshot`
+    - `GET /api/app/version/list`
+    - `POST /api/app/version/rollback`
+  - 前端对话页新增“编辑模式切换 + 版本回滚弹窗”交互。
+- 已完成验证：
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`24 passed`）。
+  - 前端构建：`npm run build` 通过。
+- 相关提交：
+  - `待合并后补充`
 
 ### M06 收尾归档
 - M06 功能扩展完成，范围对齐 `6519021`、`499312b`、`695d809`。

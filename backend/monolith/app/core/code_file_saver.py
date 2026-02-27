@@ -14,6 +14,7 @@ from app.core.code_gen_types import (
     CODE_GEN_TYPE_VUE_PROJECT,
 )
 from app.core.config import Settings
+from app.core.edit_modes import EDIT_MODE_FULL
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 
@@ -52,14 +53,14 @@ class CodeFileSaver(ABC):
     code_gen_type: str
 
     @abstractmethod
-    def save(self, app_id: int, parsed_code: str, settings: Settings) -> Path:
+    def save(self, app_id: int, parsed_code: str, settings: Settings, edit_mode: str = EDIT_MODE_FULL) -> Path:
         raise NotImplementedError
 
 
 class HtmlCodeFileSaver(CodeFileSaver):
     code_gen_type = CODE_GEN_TYPE_HTML
 
-    def save(self, app_id: int, parsed_code: str, settings: Settings) -> Path:
+    def save(self, app_id: int, parsed_code: str, settings: Settings, edit_mode: str = EDIT_MODE_FULL) -> Path:
         output_dir = settings.generated_code_path() / f"{CODE_GEN_TYPE_HTML}_{app_id}"
         output_dir.mkdir(parents=True, exist_ok=True)
         output_file = output_dir / "index.html"
@@ -70,9 +71,11 @@ class HtmlCodeFileSaver(CodeFileSaver):
 class MultiFileCodeFileSaver(CodeFileSaver):
     code_gen_type = CODE_GEN_TYPE_MULTI_FILE
 
-    def save(self, app_id: int, parsed_code: str, settings: Settings) -> Path:
+    def save(self, app_id: int, parsed_code: str, settings: Settings, edit_mode: str = EDIT_MODE_FULL) -> Path:
         output_dir = settings.generated_code_path() / f"{CODE_GEN_TYPE_MULTI_FILE}_{app_id}"
         output_dir.mkdir(parents=True, exist_ok=True)
+        if edit_mode == EDIT_MODE_FULL:
+            _clean_output_dir(output_dir)
         files = extract_generated_files(parsed_code, code_gen_type=CODE_GEN_TYPE_MULTI_FILE)
         if not files:
             files = [GeneratedFile(path="README.md", content=parsed_code)]
@@ -83,9 +86,11 @@ class MultiFileCodeFileSaver(CodeFileSaver):
 class VueProjectCodeFileSaver(CodeFileSaver):
     code_gen_type = CODE_GEN_TYPE_VUE_PROJECT
 
-    def save(self, app_id: int, parsed_code: str, settings: Settings) -> Path:
+    def save(self, app_id: int, parsed_code: str, settings: Settings, edit_mode: str = EDIT_MODE_FULL) -> Path:
         output_dir = settings.generated_code_path() / f"{CODE_GEN_TYPE_VUE_PROJECT}_{app_id}"
         output_dir.mkdir(parents=True, exist_ok=True)
+        if edit_mode == EDIT_MODE_FULL:
+            _clean_output_dir(output_dir)
         files = extract_generated_files(parsed_code, code_gen_type=CODE_GEN_TYPE_VUE_PROJECT)
         if not files:
             files = _build_default_vue_project_files(parsed_code)
@@ -103,11 +108,18 @@ class CodeFileSaverExecutor:
         )
         self._savers = {saver.code_gen_type: saver for saver in saver_list}
 
-    def save(self, code_gen_type: str, app_id: int, parsed_code: str, settings: Settings) -> Path:
+    def save(
+        self,
+        code_gen_type: str,
+        app_id: int,
+        parsed_code: str,
+        settings: Settings,
+        edit_mode: str = EDIT_MODE_FULL,
+    ) -> Path:
         saver = self._savers.get(code_gen_type)
         if saver is None:
             raise BusinessException(ErrorCode.PARAMS_ERROR, f"Unsupported code_gen_type: {code_gen_type}")
-        return saver.save(app_id=app_id, parsed_code=parsed_code, settings=settings)
+        return saver.save(app_id=app_id, parsed_code=parsed_code, settings=settings, edit_mode=edit_mode)
 
 
 def save_html_code(app_id: int, html_code: str, settings: Settings) -> Path:
@@ -205,6 +217,22 @@ def _write_generated_files(output_dir: Path, files: list[GeneratedFile]) -> None
         except ValueError as exc:
             raise BusinessException(ErrorCode.PARAMS_ERROR, f"Invalid file path: {item.path}") from exc
         target.write_text(item.content, encoding="utf-8")
+
+
+def _clean_output_dir(output_dir: Path) -> None:
+    keep_roots = {".versions", ".screenshots"}
+    for path in sorted(output_dir.rglob("*"), reverse=True):
+        rel = path.relative_to(output_dir).as_posix()
+        root = rel.split("/", 1)[0]
+        if root in keep_roots:
+            continue
+        if path.is_file():
+            path.unlink(missing_ok=True)
+        elif path.is_dir():
+            try:
+                path.rmdir()
+            except OSError:
+                continue
 
 
 def _build_default_vue_project_files(raw_text: str) -> list[GeneratedFile]:

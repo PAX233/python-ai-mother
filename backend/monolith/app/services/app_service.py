@@ -1,14 +1,17 @@
 import io
 import json
+import shutil
 import zipfile
 from datetime import UTC, datetime
 from math import ceil
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.code_gen_types import CODE_GEN_TYPE_HTML, SUPPORTED_CODE_GEN_TYPES
+from app.core.edit_modes import EDIT_MODE_FULL, SUPPORTED_EDIT_MODES
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 from app.models.app import App
@@ -19,6 +22,7 @@ from app.schemas.app import (
     AppDeployRequest,
     AppQueryRequest,
     AppUpdateRequest,
+    AppVersionVO,
     AppVO,
     PageAppVO,
 )
@@ -181,6 +185,88 @@ class AppService:
             manifest=manifest,
         )
 
+    async def create_version_snapshot(
+        self,
+        db: AsyncSession,
+        app_id: int,
+        login_user: User,
+        generated_root: Path,
+        message: str | None,
+        edit_mode: str,
+    ) -> AppVersionVO:
+        app_entity = await self.get_app_entity_by_id(db, app_id)
+        self._assert_access(app_entity, login_user)
+
+        normalized_mode = self.normalize_edit_mode(edit_mode)
+        source_dir = self._resolve_source_dir(app_entity, generated_root)
+        versions_dir = source_dir / ".versions"
+        versions_dir.mkdir(parents=True, exist_ok=True)
+        index_path = versions_dir / "index.json"
+
+        entries = self._load_version_index(index_path)
+        latest = int(entries[-1]["version"]) if entries else 0
+        next_version = latest + 1
+        file_name = f"v{next_version:04d}_{normalized_mode}.zip"
+        snapshot_path = versions_dir / file_name
+
+        self._zip_snapshot(source_dir=source_dir, snapshot_path=snapshot_path)
+
+        entry = {
+            "version": next_version,
+            "fileName": file_name,
+            "message": (message or "").strip() or None,
+            "editMode": normalized_mode,
+            "createdTime": datetime.now(UTC).isoformat(),
+        }
+        entries.append(entry)
+        self._save_version_index(index_path, entries)
+        return self._to_app_version_vo(entry)
+
+    async def list_version_snapshots(
+        self,
+        db: AsyncSession,
+        app_id: int,
+        login_user: User,
+        generated_root: Path,
+    ) -> list[AppVersionVO]:
+        app_entity = await self.get_app_entity_by_id(db, app_id)
+        self._assert_access(app_entity, login_user)
+
+        source_dir = self._resolve_source_dir(app_entity, generated_root)
+        index_path = source_dir / ".versions" / "index.json"
+        entries = self._load_version_index(index_path)
+        return [self._to_app_version_vo(item) for item in reversed(entries)]
+
+    async def rollback_to_version(
+        self,
+        db: AsyncSession,
+        app_id: int,
+        version: int,
+        login_user: User,
+        generated_root: Path,
+    ) -> bool:
+        app_entity = await self.get_app_entity_by_id(db, app_id)
+        self._assert_access(app_entity, login_user)
+
+        source_dir = self._resolve_source_dir(app_entity, generated_root)
+        versions_dir = source_dir / ".versions"
+        index_path = versions_dir / "index.json"
+        entries = self._load_version_index(index_path)
+        target = next((item for item in entries if int(item.get("version", 0)) == version), None)
+        if target is None:
+            raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "Version not found")
+
+        file_name = str(target.get("fileName") or "").strip()
+        if not file_name:
+            raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "Snapshot file missing")
+        snapshot_path = versions_dir / file_name
+        if not snapshot_path.exists():
+            raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "Snapshot file not found")
+
+        self._clear_source_dir_for_restore(source_dir)
+        self._restore_snapshot(snapshot_path=snapshot_path, source_dir=source_dir)
+        return True
+
     async def get_app_entity_by_id(self, db: AsyncSession, app_id: int) -> App:
         if app_id <= 0:
             raise BusinessException(ErrorCode.PARAMS_ERROR, "Invalid app id")
@@ -304,6 +390,13 @@ class AppService:
             raise BusinessException(ErrorCode.PARAMS_ERROR, f"Unsupported code_gen_type: {value}")
         return value
 
+    @staticmethod
+    def normalize_edit_mode(edit_mode: str | None) -> str:
+        value = (edit_mode or EDIT_MODE_FULL).strip().lower()
+        if value not in SUPPORTED_EDIT_MODES:
+            raise BusinessException(ErrorCode.PARAMS_ERROR, f"Unsupported edit_mode: {value}")
+        return value
+
     async def _resolve_code_gen_type(self, payload: AppAddRequest, routing_service: object | None) -> str:
         specified = (payload.code_gen_type or "").strip()
         if specified:
@@ -342,3 +435,81 @@ class AppService:
                 json.dumps(manifest, ensure_ascii=False, indent=2),
             )
         return zip_buffer.getvalue()
+
+    @staticmethod
+    def _assert_access(app_entity: App, login_user: User) -> None:
+        if app_entity.user_id != login_user.id and login_user.user_role != USER_ROLE_ADMIN:
+            raise BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission")
+
+    @staticmethod
+    def _resolve_source_dir(app_entity: App, generated_root: Path) -> Path:
+        source_dir = generated_root / f"{app_entity.code_gen_type}_{app_entity.id}"
+        if not source_dir.exists() or not source_dir.is_dir():
+            raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "Generated code not found, please generate first")
+        return source_dir
+
+    @staticmethod
+    def _load_version_index(index_path: Path) -> list[dict[str, Any]]:
+        if not index_path.exists():
+            return []
+        try:
+            raw = json.loads(index_path.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                return [item for item in raw if isinstance(item, dict)]
+        except json.JSONDecodeError:
+            return []
+        return []
+
+    @staticmethod
+    def _save_version_index(index_path: Path, entries: list[dict[str, Any]]) -> None:
+        index_path.parent.mkdir(parents=True, exist_ok=True)
+        index_path.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    @staticmethod
+    def _zip_snapshot(source_dir: Path, snapshot_path: Path) -> None:
+        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(snapshot_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+            for path in source_dir.rglob("*"):
+                if not path.is_file():
+                    continue
+                rel = path.relative_to(source_dir).as_posix()
+                if rel.startswith(".versions/"):
+                    continue
+                zip_file.write(path, arcname=rel)
+
+    @staticmethod
+    def _clear_source_dir_for_restore(source_dir: Path) -> None:
+        keep_roots = {".versions", ".screenshots"}
+        for path in source_dir.iterdir():
+            if path.name in keep_roots:
+                continue
+            if path.is_file():
+                path.unlink(missing_ok=True)
+            else:
+                shutil.rmtree(path, ignore_errors=True)
+
+    @staticmethod
+    def _restore_snapshot(snapshot_path: Path, source_dir: Path) -> None:
+        with zipfile.ZipFile(snapshot_path, mode="r") as zip_file:
+            for name in zip_file.namelist():
+                clean = name.replace("\\", "/").strip("/")
+                if not clean or clean.startswith("../") or "/../" in clean:
+                    continue
+                target = (source_dir / clean).resolve()
+                try:
+                    target.relative_to(source_dir.resolve())
+                except ValueError as exc:
+                    raise BusinessException(ErrorCode.PARAMS_ERROR, "Invalid snapshot file path") from exc
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with zip_file.open(name, "r") as src, target.open("wb") as dst:
+                    dst.write(src.read())
+
+    @staticmethod
+    def _to_app_version_vo(entry: dict[str, Any]) -> AppVersionVO:
+        return AppVersionVO(
+            version=int(entry.get("version") or 0),
+            file_name=str(entry.get("fileName") or ""),
+            message=(str(entry.get("message")) if entry.get("message") is not None else None),
+            edit_mode=str(entry.get("editMode") or EDIT_MODE_FULL),
+            created_time=str(entry.get("createdTime") or datetime.now(UTC).isoformat()),
+        )
