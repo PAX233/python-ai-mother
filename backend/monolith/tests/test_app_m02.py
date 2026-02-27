@@ -71,34 +71,38 @@ def test_app_add_and_get_vo() -> None:
 
 def test_codegen_facade_save_html_file() -> None:
     settings = get_settings()
+    original_generated_code_dir = settings.generated_code_dir
     with tempfile.TemporaryDirectory() as tmp_dir:
         settings.generated_code_dir = tmp_dir
 
-        class FakeAiService:
-            async def generate_stream(self, system_prompt: str, user_prompt: str):
-                assert system_prompt
-                assert user_prompt
-                yield "```html\n<html><body><h1>Hello</h1></body></html>\n```"
+        try:
+            class FakeAiService:
+                async def generate_stream(self, system_prompt: str, user_prompt: str):
+                    assert system_prompt
+                    assert user_prompt
+                    yield "```html\n<html><body><h1>Hello</h1></body></html>\n```"
 
-        facade = AiCodeGeneratorFacade(settings)
-        facade.ai_service = FakeAiService()  # type: ignore[assignment]
+            facade = AiCodeGeneratorFacade(settings)
+            facade.ai_service = FakeAiService()  # type: ignore[assignment]
 
-        async def _run() -> list[str]:
-            chunks = []
-            async for item in facade.generate_and_save_code_stream(
-                app_id=123,
-                user_message="生成一个标题",
-                code_gen_type="html",
-            ):
-                chunks.append(item)
-            return chunks
+            async def _run() -> list[str]:
+                chunks = []
+                async for item in facade.generate_and_save_code_stream(
+                    app_id=123,
+                    user_message="生成一个标题",
+                    code_gen_type="html",
+                ):
+                    chunks.append(item)
+                return chunks
 
-        chunks = asyncio.run(_run())
-        assert len(chunks) == 1
+            chunks = asyncio.run(_run())
+            assert len(chunks) == 1
 
-        output_file = Path(tmp_dir) / "html_123" / "index.html"
-        assert output_file.exists()
-        assert "<h1>Hello</h1>" in output_file.read_text(encoding="utf-8")
+            output_file = Path(tmp_dir) / "html_123" / "index.html"
+            assert output_file.exists()
+            assert "<h1>Hello</h1>" in output_file.read_text(encoding="utf-8")
+        finally:
+            settings.generated_code_dir = original_generated_code_dir
 
 
 def test_chat_gen_code_sse() -> None:
@@ -140,6 +144,7 @@ def test_parser_and_saver_executor_for_multi_file() -> None:
     settings = get_settings()
     parser_executor = CodeParserExecutor()
     saver_executor = CodeFileSaverExecutor()
+    original_generated_code_dir = settings.generated_code_dir
 
     raw = "```txt\n# project skeleton\n- app.py\n```"
     parsed = parser_executor.parse(code_gen_type="multi_file", raw_text=raw)
@@ -147,15 +152,18 @@ def test_parser_and_saver_executor_for_multi_file() -> None:
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         settings.generated_code_dir = tmp_dir
-        output_dir = saver_executor.save(
-            code_gen_type="multi_file",
-            app_id=88,
-            parsed_code=parsed,
-            settings=settings,
-        )
-        output_file = output_dir / "README.md"
-        assert output_file.exists()
-        assert "project skeleton" in output_file.read_text(encoding="utf-8")
+        try:
+            output_dir = saver_executor.save(
+                code_gen_type="multi_file",
+                app_id=88,
+                parsed_code=parsed,
+                settings=settings,
+            )
+            output_file = output_dir / "README.md"
+            assert output_file.exists()
+            assert "project skeleton" in output_file.read_text(encoding="utf-8")
+        finally:
+            settings.generated_code_dir = original_generated_code_dir
 
 
 def test_sse_helpers() -> None:

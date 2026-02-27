@@ -10,6 +10,7 @@
 - M00：已完成并合并 `master`（合并提交：`202d2ce`）。
 - M01：已完成并合并 `master`（合并提交：`7cacc86`）。
 - M02：已完成并合并 `master`（合并提交：`d8dc16c`）。
+- M03：已完成，待合并 `master`（当前分支：`temp/m03-20260227-app-module`）。
 
 ## 2. 强制开发流程规范
 
@@ -188,9 +189,10 @@ python-ai-mother/
   - 前端只做 API 适配，不做无关重构
 
 ## 10. 立即执行项
-- [x] 创建 M02 临时分支（命名：`temp/m02-yyyymmdd-ai-app`）
-- [x] 对标 `2f783b3`、`6c38f1d` 梳理最小功能闭环
-- [x] 完成 AI 模型接入与最小 Prompt 生成链路
-- [x] 增加至少 1 条 M02 端到端 smoke test
-- [x] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M02
+- [x] 创建 M03 临时分支（命名：`temp/m03-yyyymmdd-app-module`）
+- [x] 完成应用 CRUD 与分页查询闭环
+- [x] 完成应用部署、静态访问、下载能力
+- [x] 完成前端应用模块对接与联调
+- [x] 增加至少 1 条 M03 端到端 smoke test
+- [x] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M03
 
