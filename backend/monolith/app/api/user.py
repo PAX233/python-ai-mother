@@ -3,7 +3,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.dependencies import get_app_settings, get_db_session, get_user_service, require_role
 from app.models.user import User
-from app.schemas.user import LoginUserVO, UserLoginRequest, UserRegisterRequest
+from app.schemas.user import (
+    DeleteRequest,
+    LoginUserVO,
+    PageUserVO,
+    UserAddRequest,
+    UserData,
+    UserLoginRequest,
+    UserQueryRequest,
+    UserRegisterRequest,
+    UserUpdateRequest,
+    UserVO,
+)
 from app.services.user_service import USER_ROLE_ADMIN, UserService
 from app.core.config import Settings
 from app.core.response import BaseResponse, success_response
@@ -70,6 +81,72 @@ async def user_logout(
         path="/",
     )
     return success_response(result)
+
+
+@router.post("/add", response_model=BaseResponse[int])
+async def add_user(
+    payload: UserAddRequest,
+    _: User = Depends(require_role(USER_ROLE_ADMIN)),
+    db: AsyncSession = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+) -> BaseResponse[int]:
+    user_id = await user_service.add_user(db, payload)
+    return success_response(user_id)
+
+
+@router.get("/get", response_model=BaseResponse[UserData])
+async def get_user_by_id(
+    id: int,
+    _: User = Depends(require_role(USER_ROLE_ADMIN)),
+    db: AsyncSession = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+) -> BaseResponse[UserData]:
+    user_data = await user_service.get_user_by_id(db, id)
+    return success_response(user_data)
+
+
+@router.get("/get/vo", response_model=BaseResponse[UserVO])
+async def get_user_vo_by_id(
+    id: int,
+    _: User = Depends(require_role(USER_ROLE_ADMIN)),
+    db: AsyncSession = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+) -> BaseResponse[UserVO]:
+    user_data = await user_service.get_user_vo_by_id(db, id)
+    return success_response(user_data)
+
+
+@router.post("/delete", response_model=BaseResponse[bool])
+async def delete_user(
+    payload: DeleteRequest,
+    _: User = Depends(require_role(USER_ROLE_ADMIN)),
+    db: AsyncSession = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+) -> BaseResponse[bool]:
+    result = await user_service.delete_user(db, payload.id or 0)
+    return success_response(result)
+
+
+@router.post("/update", response_model=BaseResponse[bool])
+async def update_user(
+    payload: UserUpdateRequest,
+    _: User = Depends(require_role(USER_ROLE_ADMIN)),
+    db: AsyncSession = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+) -> BaseResponse[bool]:
+    result = await user_service.update_user(db, payload)
+    return success_response(result)
+
+
+@router.post("/list/page/vo", response_model=BaseResponse[PageUserVO])
+async def list_user_vo_by_page(
+    payload: UserQueryRequest,
+    _: User = Depends(require_role(USER_ROLE_ADMIN)),
+    db: AsyncSession = Depends(get_db_session),
+    user_service: UserService = Depends(get_user_service),
+) -> BaseResponse[PageUserVO]:
+    page = await user_service.list_user_vo_by_page(db, payload)
+    return success_response(page)
 
 
 @router.get("/admin/ping", response_model=BaseResponse[bool])
