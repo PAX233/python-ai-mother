@@ -1,4 +1,6 @@
-import asyncio
+import sqlite3
+from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,9 +8,7 @@ from fastapi.testclient import TestClient
 from app.core.config import get_settings
 from app.core.error_codes import ErrorCode
 from app.core.security import hash_password
-from app.db.base import metadata
 from app.main import app
-from app.models import User  # noqa: F401
 
 
 class FakeRedis:
@@ -29,46 +29,31 @@ class FakeRedis:
         return None
 
 
-def _reset_user_table() -> None:
-    async def _run() -> None:
-        engine = app.state.resources.engine
-        if engine is None:
-            raise RuntimeError("database engine is not initialized")
-        async with engine.begin() as conn:
-            await conn.run_sync(lambda sync_conn: metadata.drop_all(sync_conn, tables=[User.__table__]))
-            await conn.run_sync(lambda sync_conn: metadata.create_all(sync_conn, tables=[User.__table__]))
-
-    asyncio.run(_run())
+def _unique_suffix() -> str:
+    return uuid4().hex[:8]
 
 
-def _drop_user_table() -> None:
-    async def _run() -> None:
-        engine = app.state.resources.engine
-        if engine is None:
-            return
-        async with engine.begin() as conn:
-            await conn.run_sync(lambda sync_conn: metadata.drop_all(sync_conn, tables=[User.__table__]))
-
-    asyncio.run(_run())
+def _sqlite_db_path() -> Path:
+    settings = get_settings()
+    prefix = "sqlite+aiosqlite:///"
+    if not settings.database_url.startswith(prefix):
+        raise RuntimeError("Tests currently only support sqlite database_url")
+    return Path(settings.database_url[len(prefix) :]).resolve()
 
 
-def _seed_admin_user(account: str = "admin_root", password: str = "adminPass123") -> None:
-    async def _run() -> None:
-        session_factory = app.state.resources.session_factory
-        if session_factory is None:
-            raise RuntimeError("session factory is not initialized")
-        settings = get_settings()
-        async with session_factory() as session:
-            user = User(
-                user_account=account,
-                user_password=hash_password(password, settings.password_salt),
-                user_name="admin",
-                user_role="admin",
-            )
-            session.add(user)
-            await session.commit()
-
-    asyncio.run(_run())
+def _seed_admin_user(account: str, password: str) -> None:
+    settings = get_settings()
+    hashed_password = hash_password(password, settings.password_salt)
+    db_path = _sqlite_db_path()
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            """
+            INSERT INTO user (user_account, user_password, user_name, user_role, is_delete)
+            VALUES (?, ?, ?, ?, 0)
+            """,
+            (account, hashed_password, "admin", "admin"),
+        )
+        conn.commit()
 
 
 def _login(client: TestClient, account: str, password: str) -> None:
@@ -84,16 +69,18 @@ def _login(client: TestClient, account: str, password: str) -> None:
 def client() -> TestClient:
     with TestClient(app) as test_client:
         app.state.resources.redis_client = FakeRedis()
-        _reset_user_table()
         yield test_client
-        _drop_user_table()
 
 
 def test_user_register_login_logout_flow(client: TestClient) -> None:
+    suffix = _unique_suffix()
+    account = f"demo_user_{suffix}"
+    password = "strongPass123"
+
     register_payload = {
-        "userAccount": "demo_user",
-        "userPassword": "strongPass123",
-        "checkPassword": "strongPass123",
+        "userAccount": account,
+        "userPassword": password,
+        "checkPassword": password,
     }
     register_response = client.post("/api/user/register", json=register_payload)
     assert register_response.status_code == 200
@@ -103,19 +90,19 @@ def test_user_register_login_logout_flow(client: TestClient) -> None:
 
     login_response = client.post(
         "/api/user/login",
-        json={"userAccount": "demo_user", "userPassword": "strongPass123"},
+        json={"userAccount": account, "userPassword": password},
     )
     assert login_response.status_code == 200
     login_body = login_response.json()
     assert login_body["code"] == int(ErrorCode.SUCCESS)
-    assert login_body["data"]["userAccount"] == "demo_user"
+    assert login_body["data"]["userAccount"] == account
     assert "set-cookie" in login_response.headers
 
     current_response = client.get("/api/user/get/login")
     assert current_response.status_code == 200
     current_body = current_response.json()
     assert current_body["code"] == int(ErrorCode.SUCCESS)
-    assert current_body["data"]["userAccount"] == "demo_user"
+    assert current_body["data"]["userAccount"] == account
 
     logout_response = client.post("/api/user/logout")
     assert logout_response.status_code == 200
@@ -130,17 +117,20 @@ def test_user_register_login_logout_flow(client: TestClient) -> None:
 
 
 def test_user_login_with_invalid_password(client: TestClient) -> None:
+    suffix = _unique_suffix()
+    account = f"another_user_{suffix}"
+
     client.post(
         "/api/user/register",
         json={
-            "userAccount": "another_user",
+            "userAccount": account,
             "userPassword": "strongPass123",
             "checkPassword": "strongPass123",
         },
     )
     response = client.post(
         "/api/user/login",
-        json={"userAccount": "another_user", "userPassword": "wrong_password"},
+        json={"userAccount": account, "userPassword": "wrong_password"},
     )
     payload = response.json()
     assert response.status_code == 200
@@ -155,13 +145,18 @@ def test_user_get_login_without_session(client: TestClient) -> None:
 
 
 def test_admin_crud_and_page_flow(client: TestClient) -> None:
-    _seed_admin_user()
-    _login(client, "admin_root", "adminPass123")
+    suffix = _unique_suffix()
+    admin_account = f"admin_root_{suffix}"
+    managed_account = f"managed_user_{suffix}"
+    admin_password = "adminPass123"
+
+    _seed_admin_user(admin_account, admin_password)
+    _login(client, admin_account, admin_password)
 
     add_response = client.post(
         "/api/user/add",
         json={
-            "userAccount": "managed_user",
+            "userAccount": managed_account,
             "userName": "Managed User",
             "userRole": "user",
         },
@@ -176,13 +171,13 @@ def test_admin_crud_and_page_flow(client: TestClient) -> None:
     get_payload = get_response.json()
     assert get_response.status_code == 200
     assert get_payload["code"] == int(ErrorCode.SUCCESS)
-    assert get_payload["data"]["userAccount"] == "managed_user"
+    assert get_payload["data"]["userAccount"] == managed_account
 
     get_vo_response = client.get("/api/user/get/vo", params={"id": managed_user_id})
     get_vo_payload = get_vo_response.json()
     assert get_vo_response.status_code == 200
     assert get_vo_payload["code"] == int(ErrorCode.SUCCESS)
-    assert get_vo_payload["data"]["userAccount"] == "managed_user"
+    assert get_vo_payload["data"]["userAccount"] == managed_account
 
     update_response = client.post(
         "/api/user/update",
@@ -195,7 +190,7 @@ def test_admin_crud_and_page_flow(client: TestClient) -> None:
 
     list_response = client.post(
         "/api/user/list/page/vo",
-        json={"pageNum": 1, "pageSize": 10, "userAccount": "managed"},
+        json={"pageNum": 1, "pageSize": 10, "userAccount": managed_account},
     )
     list_payload = list_response.json()
     assert list_response.status_code == 200
@@ -216,15 +211,19 @@ def test_admin_crud_and_page_flow(client: TestClient) -> None:
 
 
 def test_admin_api_requires_admin_role(client: TestClient) -> None:
+    suffix = _unique_suffix()
+    account = f"normal_user_{suffix}"
+    password = "normalPass123"
+
     client.post(
         "/api/user/register",
         json={
-            "userAccount": "normal_user",
-            "userPassword": "normalPass123",
-            "checkPassword": "normalPass123",
+            "userAccount": account,
+            "userPassword": password,
+            "checkPassword": password,
         },
     )
-    _login(client, "normal_user", "normalPass123")
+    _login(client, account, password)
 
     response = client.post(
         "/api/user/list/page/vo",

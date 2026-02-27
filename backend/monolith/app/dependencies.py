@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings, get_settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
+from app.core.ai_codegen_facade import AiCodeGeneratorFacade
 from app.models.user import User
+from app.services.app_service import AppService
 from app.services.session_service import SessionService
 from app.services.user_service import UserService
 
@@ -33,6 +35,14 @@ def get_user_service(
     redis_client: Redis | None = Depends(get_redis_client),
 ) -> UserService:
     return UserService(settings=settings, session_service=SessionService(redis_client, settings))
+
+
+def get_app_service() -> AppService:
+    return AppService()
+
+
+def get_ai_codegen_facade(settings: Settings = Depends(get_app_settings)) -> AiCodeGeneratorFacade:
+    return AiCodeGeneratorFacade(settings=settings)
 
 
 async def get_login_user(

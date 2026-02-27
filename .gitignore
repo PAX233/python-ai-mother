@@ -13,6 +13,8 @@ venv/
 coverage.xml
 htmlcov/
 *.db
+generated/
+backend/monolith/generated/
 
 # Frontend
 node_modules/

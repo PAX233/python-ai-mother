@@ -1,6 +1,8 @@
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import get_settings
@@ -25,6 +27,8 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     configure_logging(settings.log_level)
+    generated_root = settings.generated_code_path()
+    Path(generated_root).mkdir(parents=True, exist_ok=True)
     fastapi_app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
@@ -34,6 +38,11 @@ def create_app() -> FastAPI:
     register_middlewares(fastapi_app, settings)
     register_exception_handlers(fastapi_app)
     fastapi_app.include_router(api_router, prefix=settings.api_prefix)
+    fastapi_app.mount(
+        f"{settings.api_prefix}/static",
+        StaticFiles(directory=str(generated_root), html=True),
+        name="static",
+    )
     return fastapi_app
 
 

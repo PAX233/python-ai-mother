@@ -4,7 +4,8 @@
 
 ## 当前进度
 - M00：已完成并合并 `master`
-- M01：开发完成，待按流程拆分提交并验收合并
+- M01：已完成并合并 `master`
+- M02：已完成，待合并 `master`
 
 ## 目录结构
 
@@ -41,6 +42,22 @@ npm run dev
 - 前端地址：`http://localhost:5173`
 - 后端健康接口：`http://localhost:8123/api/health/`
 - 代理健康接口：`http://localhost:5173/api/health/`
+- M02 应用接口：
+  - `POST /api/app/add`
+  - `GET /api/app/get/vo?id={appId}`
+  - `GET /api/app/chat/gen/code?appId={appId}&message=...`（SSE）
+
+## 模型配置（运行时注入）
+
+不要将真实 `api_key` 写入 Git 文件。建议仅在当前终端会话临时设置：
+
+```powershell
+$env:LLM_BASE_URL="https://api.ikuncode.cc/v1"
+$env:LLM_API_KEY="<你的密钥>"
+$env:LLM_MODEL_NAME="gpt-5.1-codex-mini"
+$env:LLM_STREAM="true"
+$env:LLM_TIMEOUT_SECONDS="180"
+```
 
 ## 开发流程
 - 所有开发必须在临时分支进行
