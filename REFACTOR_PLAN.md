@@ -189,8 +189,8 @@ python-ai-mother/
 
 ## 10. 立即执行项
 - [x] 创建 M02 临时分支（命名：`temp/m02-yyyymmdd-ai-app`）
-- [ ] 对标 `2f783b3`、`6c38f1d` 梳理最小功能闭环
-- [ ] 完成 AI 模型接入与最小 Prompt 生成链路
-- [ ] 增加至少 1 条 M02 端到端 smoke test
+- [x] 对标 `2f783b3`、`6c38f1d` 梳理最小功能闭环
+- [x] 完成 AI 模型接入与最小 Prompt 生成链路
+- [x] 增加至少 1 条 M02 端到端 smoke test
 - [x] 更新 `CHANGELOGS.md` 的 `进行中` 区块并进入 M02
 

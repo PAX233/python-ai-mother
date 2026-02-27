@@ -55,3 +55,21 @@ uv run pytest -q
   "data": {}
 }
 ```
+
+## 6. M02 应用生成接口
+
+- `POST /api/app/add`
+- `GET /api/app/get/vo?id={appId}`
+- `GET /api/app/chat/gen/code?appId={appId}&message=...`（SSE）
+
+## 7. 模型环境变量（仅运行时）
+
+不要把真实密钥写入仓库文件（包括 `.env.example`、`README`、提交记录）。
+
+```powershell
+$env:LLM_BASE_URL="https://api.ikuncode.cc/v1"
+$env:LLM_API_KEY="<你的密钥>"
+$env:LLM_MODEL_NAME="gpt-5.1-codex-mini"
+$env:LLM_STREAM="true"
+$env:LLM_TIMEOUT_SECONDS="180"
+```
