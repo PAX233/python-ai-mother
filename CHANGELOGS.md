@@ -75,3 +75,14 @@
 ### 待办
 - 按规范拆分中文提交信息。
 - 分支验收通过后合并到 `master`，并将本段归档为正式发布记录。
+
+- M01 对标补齐：已完成管理员用户管理接口（增删改查 + 分页），路径与前端生成 API 完整一致。
+  - `POST /api/user/add`
+  - `GET /api/user/get`
+  - `GET /api/user/get/vo`
+  - `POST /api/user/update`
+  - `POST /api/user/delete`
+  - `POST /api/user/list/page/vo`
+- M01 权限校验补齐：管理员接口统一接入 `require_role('admin')`。
+- M01 测试补齐：新增管理员 CRUD/分页与权限拒绝用例。
+- M01 当前对标结论：`c96ffa8`、`d52f335`、`55ab6c7` 已全部对齐。

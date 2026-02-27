@@ -10,8 +10,15 @@
 - [x] 用户登录：`POST /api/user/login`
 - [x] 登录态获取：`GET /api/user/get/login`
 - [x] 用户登出：`POST /api/user/logout`
-- [x] 基础权限：`user/admin`（新增 `require_role` 与 `admin/ping` 验证路由）
+- [x] 基础权限：`user/admin`（`require_role` + 管理员接口鉴权）
 - [x] Redis Session 落地与读取（Redis 优先 + 内存兜底）
+- [x] 管理员用户管理：增删改查 + 分页
+  - `POST /api/user/add`
+  - `GET /api/user/get`
+  - `GET /api/user/get/vo`
+  - `POST /api/user/update`
+  - `POST /api/user/delete`
+  - `POST /api/user/list/page/vo`
 
 ## 3. 技术与目录实现
 - [x] 新增用户领域目录：`models/schemas/services/api/dependencies`
@@ -25,13 +32,11 @@
 - [x] 未登录访问受限接口返回 `40100`
 - [x] 登录后可获取当前用户
 - [x] 登出后会话失效
-- [x] `uv run pytest -q` 通过（6 passed）
-- [x] `uv run alembic upgrade head` + `uv run alembic current` 通过
+- [x] 管理员 CRUD/分页接口可用
+- [x] `uv run pytest -q` 通过（8 passed）
 - [x] `npm run build` 通过
 - [ ] `CHANGELOGS.md` 已归档到合并记录（待合并 master 后执行）
-- [ ] 提交信息使用中文（待拆分提交）
 
 ## 5. 待执行（合并前）
-1. 拆分并提交中文 commit（feat/test/docs）
-2. 补充 M01 验收记录文档
-3. 发起分支验收，验收通过后合并 `master`
+1. 提交本轮管理员接口补全变更（中文 commit）
+2. 分支验收通过后合并 `master`
