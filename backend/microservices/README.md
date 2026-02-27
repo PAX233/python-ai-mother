@@ -1,21 +1,22 @@
 # backend/microservices
 
-## 1. 服务划分（M11）
-- `common`：统一响应与错误码
-- `model`：跨服务模型定义
-- `client`：跨服务调用客户端
-- `user-service`：注册/登录/会话校验
-- `ai-service`：代码生成服务
-- `app-service`：应用聚合服务（含用户透传接口）
-- `screenshot-service`：截图服务
+## 1. Service layout (M11)
+- `common`: shared response and error contracts
+- `model`: cross-service schemas
+- `client`: internal service clients
+- `user-service`: register, login, session validation
+- `ai-service`: code generation service
+- `app-service`: aggregation entry service
+- `screenshot-service`: screenshot service
 
-## 2. 本地启动（项目内 uv）
+## 2. Local setup (project-local uv env)
 ```bash
 cd backend/microservices
-uv pip install -r requirements.txt
+uv venv .venv --python 3.11
+uv pip sync requirements.lock.txt
 ```
 
-分别启动：
+Start services separately:
 ```bash
 uv run uvicorn user-service.app.main:app --host 0.0.0.0 --port 8201
 uv run uvicorn ai-service.app.main:app --host 0.0.0.0 --port 8202
@@ -23,6 +24,12 @@ uv run uvicorn app-service.app.main:app --host 0.0.0.0 --port 8203
 uv run uvicorn screenshot-service.app.main:app --host 0.0.0.0 --port 8204
 ```
 
-## 3. 微服务编排
-- 使用：`deploy/docker/docker-compose.microservices.yml`
-- 聚合入口：`app-service`（`http://localhost:8203`）
+## 3. Docker compose
+- File: `deploy/docker/docker-compose.microservices.yml`
+- Gateway entry: `app-service` at `http://localhost:8203`
+
+## 4. Smoke test
+```bash
+cd backend/microservices
+uv run pytest -q tests/test_m11_microservice_flow.py
+```

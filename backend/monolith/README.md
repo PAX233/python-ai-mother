@@ -3,8 +3,8 @@
 ## 1. 环境准备（项目内虚拟环境）
 
 ```bash
-uv venv .venv
-uv pip install -r requirements.txt
+uv venv .venv --python 3.11
+uv pip sync requirements.lock.txt
 ```
 
 ## 2. 数据库迁移
@@ -84,7 +84,7 @@ uv run pytest -q -p no:faulthandler
 不要把真实密钥写入仓库文件（包括 `.env.example`、`README`、提交记录）。
 
 ```powershell
-$env:LLM_BASE_URL="https://api.ikuncode.cc/v1"
+$env:LLM_BASE_URL="https://your-openai-compatible-endpoint/v1"
 $env:LLM_API_KEY="<你的密钥>"
 $env:LLM_MODEL_NAME="gpt-5.1-codex-mini"
 $env:LLM_STREAM="true"
@@ -112,3 +112,5 @@ $env:CHAT_RATE_LIMIT_WINDOW_SECONDS="60"
 - 关键指标：
   - `python_ai_mother_http_requests_total`
   - `python_ai_mother_http_request_duration_seconds_*`
+
+
