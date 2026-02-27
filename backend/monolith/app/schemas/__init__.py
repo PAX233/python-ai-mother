@@ -1,4 +1,13 @@
-from app.schemas.app import AppAddRequest, AppVO, ChatToGenCodeParams
+from app.schemas.app import (
+    AppAddRequest,
+    AppAdminUpdateRequest,
+    AppDeployRequest,
+    AppQueryRequest,
+    AppUpdateRequest,
+    AppVO,
+    ChatToGenCodeParams,
+    PageAppVO,
+)
 from app.schemas.user import (
     DeleteRequest,
     LoginUserVO,
@@ -14,8 +23,13 @@ from app.schemas.user import (
 
 __all__ = [
     "AppAddRequest",
+    "AppAdminUpdateRequest",
+    "AppDeployRequest",
+    "AppQueryRequest",
+    "AppUpdateRequest",
     "AppVO",
     "ChatToGenCodeParams",
+    "PageAppVO",
     "DeleteRequest",
     "LoginUserVO",
     "PageUserVO",

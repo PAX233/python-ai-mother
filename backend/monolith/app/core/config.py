@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     llm_stream: bool = True
     llm_timeout_seconds: float = 180.0
     generated_code_dir: str = "./generated"
+    deploy_domain: str = "http://localhost:8123/api/static"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
