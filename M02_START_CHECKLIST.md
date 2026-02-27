@@ -31,7 +31,7 @@
 - [x] `uv run pytest -q` 通过
 - [x] `npm run build` 通过
 - [x] `CHANGELOGS.md` 已更新
-- [ ] 提交信息使用中文
+- [x] 提交信息使用中文
 
 ## 5. 推荐提交拆分（中文）
 1. `feat(m02): 接入AI生成最小链路与Prompt加载`
