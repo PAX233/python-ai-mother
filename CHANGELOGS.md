@@ -53,3 +53,25 @@
   - `72b9c1e` `docs(m00): 更新进行中日志与开工清单`
   - `e4d0ea5` `docs(m00): 补充统一响应文档与验收清单`
 
+
+## 2026-02-27（M01 临时分支进展）
+
+### 新增
+- 新增用户模块核心能力：注册、登录、登录态、登出（`/api/user/*`）。
+- 新增用户领域代码：`app/models/user.py`、`app/schemas/user.py`、`app/services/user_service.py`、`app/services/session_service.py`。
+- 新增权限基础能力：`require_role` 依赖与 `GET /api/user/admin/ping` 验证路由。
+- 新增用户表迁移脚本：`migrations/versions/20260227_0001_add_user_table.py`。
+- 新增用户模块测试：`tests/test_user_auth.py`（注册/登录/登录态/登出/异常场景）。
+
+### 变更
+- 扩展后端配置：增加 `password_salt`、session cookie 与 TTL 相关配置。
+- `migrations/env.py` 引入模型元数据，保证 Alembic 能识别用户表。
+
+### 验证
+- `uv run pytest -q`：通过（6 passed）。
+- `uv run alembic upgrade head`、`uv run alembic current`：通过（head=20260227_0001）。
+- `npm run build`：通过。
+
+### 待办
+- 按规范拆分中文提交信息。
+- 分支验收通过后合并到 `master`，并将本段归档为正式发布记录。
