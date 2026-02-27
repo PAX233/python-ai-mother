@@ -8,9 +8,7 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- M01 启动：进入用户模块开发（对标 `c96ffa8`、`d52f335`、`55ab6c7`）。
-- M01 目标：注册、登录、登录态、登出、基础权限与 Redis Session。
-- M01 已创建开工清单：`M01_START_CHECKLIST.md`。
+- （暂无）
 
 ## 2026-02-27
 
@@ -26,6 +24,17 @@
 ### 变更
 - M00 阶段已完成并合并到 `master`。
   - `202d2ce` `feat(m00): 完成初始化与基础依赖阶段`
+
+### M01 收尾归档
+- M01 用户模块与管理员能力已完成，并通过自动化与人工验收。
+  - `31dd5c1` `feat(m01): 完成用户注册登录与会话鉴权`
+  - `390b1b2` `test(m01): 增加用户模块接口集成测试`
+  - `b158be0` `docs(m01): 更新验收清单与阶段文档`
+  - `11f54d3` `feat(m01): 补齐管理员用户CRUD与分页接口`
+  - `6bcc799` `test(m01): 增加管理员接口权限与分页测试`
+  - `291b1a1` `docs(m01): 更新管理员模块对标与验收记录`
+- M01 对标结论：`c96ffa8`、`d52f335`、`55ab6c7` 已全部对齐。
+- M01 人工测试状态：Postman 全链路通过（用户 + 管理员 + 权限负例）。
 
 ## 2026-02-26
 
@@ -53,36 +62,3 @@
   - `72b9c1e` `docs(m00): 更新进行中日志与开工清单`
   - `e4d0ea5` `docs(m00): 补充统一响应文档与验收清单`
 
-
-## 2026-02-27（M01 临时分支进展）
-
-### 新增
-- 新增用户模块核心能力：注册、登录、登录态、登出（`/api/user/*`）。
-- 新增用户领域代码：`app/models/user.py`、`app/schemas/user.py`、`app/services/user_service.py`、`app/services/session_service.py`。
-- 新增权限基础能力：`require_role` 依赖与 `GET /api/user/admin/ping` 验证路由。
-- 新增用户表迁移脚本：`migrations/versions/20260227_0001_add_user_table.py`。
-- 新增用户模块测试：`tests/test_user_auth.py`（注册/登录/登录态/登出/异常场景）。
-
-### 变更
-- 扩展后端配置：增加 `password_salt`、session cookie 与 TTL 相关配置。
-- `migrations/env.py` 引入模型元数据，保证 Alembic 能识别用户表。
-
-### 验证
-- `uv run pytest -q`：通过（6 passed）。
-- `uv run alembic upgrade head`、`uv run alembic current`：通过（head=20260227_0001）。
-- `npm run build`：通过。
-
-### 待办
-- 按规范拆分中文提交信息。
-- 分支验收通过后合并到 `master`，并将本段归档为正式发布记录。
-
-- M01 对标补齐：已完成管理员用户管理接口（增删改查 + 分页），路径与前端生成 API 完整一致。
-  - `POST /api/user/add`
-  - `GET /api/user/get`
-  - `GET /api/user/get/vo`
-  - `POST /api/user/update`
-  - `POST /api/user/delete`
-  - `POST /api/user/list/page/vo`
-- M01 权限校验补齐：管理员接口统一接入 `require_role('admin')`。
-- M01 测试补齐：新增管理员 CRUD/分页与权限拒绝用例。
-- M01 当前对标结论：`c96ffa8`、`d52f335`、`55ab6c7` 已全部对齐。

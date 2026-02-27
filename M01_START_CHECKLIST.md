@@ -35,8 +35,10 @@
 - [x] 管理员 CRUD/分页接口可用
 - [x] `uv run pytest -q` 通过（8 passed）
 - [x] `npm run build` 通过
-- [ ] `CHANGELOGS.md` 已归档到合并记录（待合并 master 后执行）
+- [x] Postman 人工测试通过（用户链路 + 管理员链路）
+- [x] `CHANGELOGS.md` 已归档到 M01 合并记录
 
-## 5. 待执行（合并前）
-1. 提交本轮管理员接口补全变更（中文 commit）
-2. 分支验收通过后合并 `master`
+## 5. 收尾结果
+1. M01 功能、自动化测试、人工测试均通过
+2. 对标 `c96ffa8`、`d52f335`、`55ab6c7` 已完成
+3. 已满足进入 M02 的收尾条件
