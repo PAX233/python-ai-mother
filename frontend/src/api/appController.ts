@@ -124,6 +124,20 @@ export async function downloadAppCode(
   })
 }
 
+/** 此处后端没有提供注释 GET /app/download/project/${param0} */
+export async function downloadAppProject(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.downloadAppProjectParams,
+  options?: { [key: string]: any }
+) {
+  const { appId: param0, ...queryParams } = params
+  return request<any>(`/app/download/project/${param0}`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 GET /app/get/vo */
 export async function getAppVoById(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
@@ -172,6 +186,36 @@ export async function listMyAppVoByPage(
 /** 此处后端没有提供注释 POST /app/update */
 export async function updateApp(body: API.AppUpdateRequest, options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/app/update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /app/route/codegen */
+export async function routeCodeGenType(
+  body: API.AppRouteCodeGenRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseAppRouteCodeGenResult>('/app/route/codegen', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /app/screenshot */
+export async function captureAppScreenshot(
+  body: API.AppScreenshotRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseString>('/app/screenshot', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

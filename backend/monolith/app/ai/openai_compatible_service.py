@@ -69,3 +69,48 @@ class OpenAICompatibleService:
                 ) from exc
             except httpx.HTTPError as exc:
                 raise BusinessException(ErrorCode.SYSTEM_ERROR, f"LLM request network error: {exc}") from exc
+
+    async def generate_text(self, system_prompt: str, user_prompt: str) -> str:
+        if not self.settings.llm_base_url or not self.settings.llm_api_key:
+            raise BusinessException(ErrorCode.SYSTEM_ERROR, "LLM config is missing")
+
+        payload = {
+            "model": self.settings.llm_model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "stream": False,
+        }
+        headers = {
+            "Authorization": f"Bearer {self.settings.llm_api_key}",
+            "Content-Type": "application/json",
+        }
+
+        async with httpx.AsyncClient(
+            base_url=self.settings.llm_base_url,
+            timeout=self.settings.llm_timeout_seconds,
+        ) as client:
+            try:
+                response = await client.post(
+                    "/chat/completions",
+                    headers=headers,
+                    json=payload,
+                )
+                if response.status_code != 200:
+                    error_text = response.text
+                    raise BusinessException(ErrorCode.SYSTEM_ERROR, f"LLM request failed: {error_text[:300]}")
+                data = response.json()
+                choices = data.get("choices") or []
+                if not choices:
+                    return ""
+                message = choices[0].get("message") or {}
+                content = message.get("content")
+                return str(content or "").strip()
+            except httpx.TimeoutException as exc:
+                raise BusinessException(
+                    ErrorCode.SYSTEM_ERROR,
+                    f"LLM request timeout, please increase LLM_TIMEOUT_SECONDS (current={self.settings.llm_timeout_seconds})",
+                ) from exc
+            except (httpx.HTTPError, json.JSONDecodeError) as exc:
+                raise BusinessException(ErrorCode.SYSTEM_ERROR, f"LLM request network error: {exc}") from exc

@@ -10,6 +10,7 @@ class AppAddRequest(BaseModel):
 
     init_prompt: str | None = Field(default=None, alias="initPrompt")
     code_gen_type: str | None = Field(default=None, alias="codeGenType")
+    enable_auto_route: bool = Field(default=True, alias="enableAutoRoute")
 
 
 class AppUpdateRequest(BaseModel):
@@ -33,6 +34,27 @@ class AppDeployRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     app_id: int | None = Field(default=None, alias="appId")
+
+
+class AppScreenshotRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    app_id: int | None = Field(default=None, alias="appId")
+
+
+class AppRouteCodeGenRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    prompt: str
+    preferred_code_gen_type: str | None = Field(default=None, alias="preferredCodeGenType")
+
+
+class AppRouteCodeGenResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    code_gen_type: str = Field(alias="codeGenType")
+    reason: str
+    source: str
 
 
 class AppQueryRequest(BaseModel):

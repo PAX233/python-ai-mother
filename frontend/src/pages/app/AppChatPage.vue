@@ -27,6 +27,17 @@
           </template>
           下载代码
         </a-button>
+        <a-button
+            type="default"
+            @click="captureScreenshot"
+            :loading="capturingScreenshot"
+            :disabled="!isOwner"
+        >
+          <template #icon>
+            <CameraOutlined />
+          </template>
+          截图
+        </a-button>
         <a-button type="primary" @click="deployApp" :loading="deploying">
           <template #icon>
             <CloudUploadOutlined />
@@ -232,6 +243,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser'
 import {
+  captureAppScreenshot,
+  downloadAppProject,
   getAppVoById,
   deployApp as deployAppApi,
   deleteApp as deleteAppApi,
@@ -253,6 +266,7 @@ import {
   ExportOutlined,
   InfoCircleOutlined,
   DownloadOutlined,
+  CameraOutlined,
   EditOutlined,
 } from '@ant-design/icons-vue'
 
@@ -301,6 +315,7 @@ const deployUrl = ref('')
 
 // 下载相关
 const downloading = ref(false)
+const capturingScreenshot = ref(false)
 
 // 可视化编辑相关
 const isEditMode = ref(false)
@@ -658,20 +673,12 @@ const downloadCode = async () => {
   }
   downloading.value = true
   try {
-    const API_BASE_URL = request.defaults.baseURL || ''
-    const url = `${API_BASE_URL}/app/download/${appId.value}`
-    const response = await fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-    })
-    if (!response.ok) {
-      throw new Error(`下载失败: ${response.status}`)
-    }
-    // 获取文件名
-    const contentDisposition = response.headers.get('Content-Disposition')
-    const fileName = contentDisposition?.match(/filename="(.+)"/)?.[1] || `app-${appId.value}.zip`
-    // 下载文件
-    const blob = await response.blob()
+    const response = await downloadAppProject(
+      { appId: Number(appId.value) },
+      { responseType: 'blob' },
+    )
+    const blob = response.data as Blob
+    const fileName = `project-${appId.value}.zip`
     const downloadUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
@@ -685,6 +692,31 @@ const downloadCode = async () => {
     message.error('下载失败，请重试')
   } finally {
     downloading.value = false
+  }
+}
+
+const captureScreenshot = async () => {
+  if (!appId.value) {
+    message.error('应用ID不存在')
+    return
+  }
+  capturingScreenshot.value = true
+  try {
+    const res = await captureAppScreenshot({
+      appId: Number(appId.value),
+    })
+    if (res.data.code === 0 && res.data.data) {
+      message.success('截图成功，已更新应用封面')
+      window.open(res.data.data, '_blank')
+      await fetchAppInfo()
+    } else {
+      message.error('截图失败：' + (res.data.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('截图失败：', error)
+    message.error('截图失败，请重试')
+  } finally {
+    capturingScreenshot.value = false
   }
 }
 

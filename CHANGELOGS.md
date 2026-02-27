@@ -8,9 +8,23 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- 暂无（待启动 M06）。
+- 暂无（待启动 M07）。
 
 ## 2026-02-27
+
+### M06 收尾归档
+- M06 功能扩展完成，范围对齐 `6519021`、`499312b`、`695d809`。
+- 已完成能力：
+  - 新增 AI 路由能力：`POST /api/app/route/codegen`，支持启发式 + LLM 可选策略。
+  - 创建应用链路接入自动路由：未显式传 `codeGenType` 时自动推荐生成模式。
+  - 新增截图能力：`POST /api/app/screenshot`，生成图片并静态可访问，同时回写应用封面。
+  - 新增增强打包下载：`GET /api/app/download/project/{appId}`，zip 包含项目目录和 `python-ai-mother-manifest.json`。
+  - 前端对话页新增“截图”按钮，并将下载链路切换为增强打包接口。
+- 已完成验证：
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`22 passed`）。
+  - 前端构建：`npm run build` 通过。
+- 相关提交：
+  - `待合并后补充`
 
 ### 新增
 - 引入前端工程到 `frontend/`，保持原技术栈。

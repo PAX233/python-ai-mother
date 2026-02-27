@@ -2,6 +2,7 @@ declare namespace API {
   type AppAddRequest = {
     initPrompt?: string
     codeGenType?: string
+    enableAutoRoute?: boolean
   }
 
   type AppAdminUpdateRequest = {
@@ -148,6 +149,10 @@ declare namespace API {
     appId: number
   }
 
+  type downloadAppProjectParams = {
+    appId: number
+  }
+
   type getAppVOByIdByAdminParams = {
     id: number
   }
@@ -275,5 +280,26 @@ declare namespace API {
     userProfile?: string
     userRole?: string
     createTime?: string
+  }
+
+  type AppRouteCodeGenRequest = {
+    prompt: string
+    preferredCodeGenType?: string
+  }
+
+  type AppRouteCodeGenResult = {
+    codeGenType?: string
+    reason?: string
+    source?: string
+  }
+
+  type AppScreenshotRequest = {
+    appId?: number
+  }
+
+  type BaseResponseAppRouteCodeGenResult = {
+    code?: number
+    data?: AppRouteCodeGenResult
+    message?: string
   }
 }
