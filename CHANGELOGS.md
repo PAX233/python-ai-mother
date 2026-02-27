@@ -19,6 +19,8 @@
   - `POST /api/app/admin/list/page/vo`、`GET /api/app/admin/get/vo`
   - `POST /api/app/deploy`、`GET /api/app/download/{appId}`
 - M03 测试进展：新增 `test_app_m03.py`，并通过全量回归（`16 passed`）。
+- M03 前端适配进展：默认部署域名改为后端静态资源地址，`查看作品` 在本地可直接访问。
+- M03 端到端 smoke：已完成真实链路验证（注册登录 -> 创建应用 -> AI 生成 -> 部署 -> 静态访问 -> 下载）。
 
 ## 2026-02-27
 
