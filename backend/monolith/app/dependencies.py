@@ -9,6 +9,7 @@ from app.core.config import Settings, get_settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
 from app.core.ai_codegen_facade import AiCodeGeneratorFacade
+from app.core.codegen_workflow import CodeGenWorkflowRunner
 from app.models.user import User
 from app.services.app_service import AppService
 from app.services.chat_history_service import ChatHistoryService
@@ -50,6 +51,10 @@ def get_chat_history_service() -> ChatHistoryService:
 
 def get_ai_codegen_facade(settings: Settings = Depends(get_app_settings)) -> AiCodeGeneratorFacade:
     return AiCodeGeneratorFacade(settings=settings)
+
+
+def get_codegen_workflow_runner(settings: Settings = Depends(get_app_settings)) -> CodeGenWorkflowRunner:
+    return CodeGenWorkflowRunner(settings=settings)
 
 
 def get_ai_routing_service(settings: Settings = Depends(get_app_settings)) -> AiCodeGenTypeRoutingService:

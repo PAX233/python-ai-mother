@@ -75,7 +75,11 @@ uv run pytest -q -p no:faulthandler
 - `POST /api/app/version/rollback`
 - `GET /api/app/chat/gen/code?...&editMode=full|incremental`
 
-## 9. 模型环境变量（仅运行时）
+## 9. M08 工作流接口
+
+- `GET /api/app/chat/gen/workflow?appId={appId}&message=...&editMode=...`（SSE）
+
+## 10. 模型环境变量（仅运行时）
 
 不要把真实密钥写入仓库文件（包括 `.env.example`、`README`、提交记录）。
 
