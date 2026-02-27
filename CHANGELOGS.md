@@ -8,19 +8,7 @@
 - 每条记录建议附带提交哈希，便于追踪。
 
 ## 进行中
-- M03 启动：进入应用模块与部署阶段开发（对标 `868c65b`、`9112c1f`、`e05b173`、`44f81d6`、`fc48d1e`、`81eeda3`）。
-- M03 目标：应用 CRUD、部署、下载、静态访问与前端对接。
-- M03 已创建开工清单：`M03_START_CHECKLIST.md`。
-- M03 进展（后端第一批）：已补齐应用 CRUD、分页、管理员接口、部署与下载接口。
-- M03 新增接口：
-  - `POST /api/app/update`、`POST /api/app/delete`
-  - `POST /api/app/my/list/page/vo`、`POST /api/app/good/list/page/vo`
-  - `POST /api/app/admin/update`、`POST /api/app/admin/delete`
-  - `POST /api/app/admin/list/page/vo`、`GET /api/app/admin/get/vo`
-  - `POST /api/app/deploy`、`GET /api/app/download/{appId}`
-- M03 测试进展：新增 `test_app_m03.py`，并通过全量回归（`16 passed`）。
-- M03 前端适配进展：默认部署域名改为后端静态资源地址，`查看作品` 在本地可直接访问。
-- M03 端到端 smoke：已完成真实链路验证（注册登录 -> 创建应用 -> AI 生成 -> 部署 -> 静态访问 -> 下载）。
+- 暂无（待启动 M04）。
 
 ## 2026-02-27
 
@@ -36,6 +24,25 @@
 ### 变更
 - M00 阶段已完成并合并到 `master`。
   - `202d2ce` `feat(m00): 完成初始化与基础依赖阶段`
+
+### M03 收尾归档
+- M03 应用模块与部署完成，范围对齐 `868c65b`、`9112c1f`、`e05b173`、`44f81d6`、`fc48d1e`、`81eeda3`。
+- 已完成能力：
+  - 应用 CRUD、分页查询、管理员应用接口
+  - 应用部署（`deployKey` / `deployedTime`）、静态访问、下载
+  - 前端默认部署地址适配，作品可直接访问
+- 已完成验证：
+  - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`16 passed`）
+  - 前端构建：`npm run build` 通过
+  - 端到端 smoke：注册登录 -> 创建应用 -> AI 生成 -> 部署 -> 静态访问 -> 下载
+- 相关提交：
+  - `cb6f90f` `docs(m03): 完成开工准备与清单初始化`
+  - `79d85d0` `feat(m03): 补齐应用模块CRUD分页与部署下载接口`
+  - `7d8adb0` `test(m03): 增加应用模块接口集成测试`
+  - `03bb2ab` `docs(m03): 更新阶段进展与验收清单`
+  - `0535307` `feat(m03): 适配前端默认部署地址到静态资源`
+  - `4c52baf` `test(m03): 修复测试配置污染并增加静态访问断言`
+  - `9eff615` `docs(m03): 更新对标进度与端到端演示记录`
 
 ### M02 收尾归档
 - M02 AI 应用生成初版完成，范围对齐 `2f783b3`、`6c38f1d`。
