@@ -29,7 +29,7 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8123
 ## 4. 运行测试
 
 ```bash
-uv run pytest -q
+uv run pytest -q -p no:faulthandler
 ```
 
 或使用脚本：

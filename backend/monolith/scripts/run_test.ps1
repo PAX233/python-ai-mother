@@ -1,2 +1,2 @@
-uv run pytest -q
+uv run pytest -q -p no:faulthandler
 
