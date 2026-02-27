@@ -11,6 +11,14 @@
 - M03 启动：进入应用模块与部署阶段开发（对标 `868c65b`、`9112c1f`、`e05b173`、`44f81d6`、`fc48d1e`、`81eeda3`）。
 - M03 目标：应用 CRUD、部署、下载、静态访问与前端对接。
 - M03 已创建开工清单：`M03_START_CHECKLIST.md`。
+- M03 进展（后端第一批）：已补齐应用 CRUD、分页、管理员接口、部署与下载接口。
+- M03 新增接口：
+  - `POST /api/app/update`、`POST /api/app/delete`
+  - `POST /api/app/my/list/page/vo`、`POST /api/app/good/list/page/vo`
+  - `POST /api/app/admin/update`、`POST /api/app/admin/delete`
+  - `POST /api/app/admin/list/page/vo`、`GET /api/app/admin/get/vo`
+  - `POST /api/app/deploy`、`GET /api/app/download/{appId}`
+- M03 测试进展：新增 `test_app_m03.py`，并通过全量回归（`16 passed`）。
 
 ## 2026-02-27
 
