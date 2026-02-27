@@ -24,7 +24,9 @@
   - 自动化测试：`uv run pytest -q -p no:faulthandler` 通过（`22 passed`）。
   - 前端构建：`npm run build` 通过。
 - 相关提交：
-  - `待合并后补充`
+  - `544f958` `feat(m06): 完成截图打包增强与AI路由能力`
+- M06 已按流程合并到 `master`。
+  - `7a16af3` `merge(m06): 合并截图打包与AI路由重构成果`
 
 ### 新增
 - 引入前端工程到 `frontend/`，保持原技术栈。
