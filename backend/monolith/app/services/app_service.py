@@ -1,4 +1,5 @@
 import io
+import json
 import zipfile
 from datetime import UTC, datetime
 from math import ceil
@@ -37,9 +38,15 @@ class AppService:
         "deployedTime": App.deployed_time,
     }
 
-    async def add_app(self, db: AsyncSession, payload: AppAddRequest, login_user: User) -> int:
+    async def add_app(
+        self,
+        db: AsyncSession,
+        payload: AppAddRequest,
+        login_user: User,
+        routing_service: object | None = None,
+    ) -> int:
         app_name = self._build_app_name(payload.init_prompt)
-        code_gen_type = self._normalize_code_gen_type(payload.code_gen_type)
+        code_gen_type = await self._resolve_code_gen_type(payload, routing_service)
         new_app = App(
             app_name=app_name,
             init_prompt=(payload.init_prompt or "").strip() or None,
@@ -142,6 +149,37 @@ class AppService:
         if not source_dir.exists() or not source_dir.is_dir():
             raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "Generated code not found, please generate first")
         return self._zip_directory_to_bytes(source_dir)
+
+    async def build_project_download_zip_bytes(
+        self,
+        db: AsyncSession,
+        app_id: int,
+        login_user: User,
+        generated_root: Path,
+    ) -> bytes:
+        app_entity = await self.get_app_entity_by_id(db, app_id)
+        if app_entity.user_id != login_user.id and login_user.user_role != USER_ROLE_ADMIN:
+            raise BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission")
+
+        source_dir = generated_root / f"{app_entity.code_gen_type}_{app_entity.id}"
+        if not source_dir.exists() or not source_dir.is_dir():
+            raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "Generated code not found, please generate first")
+
+        file_list = [path.relative_to(source_dir).as_posix() for path in source_dir.rglob("*") if path.is_file()]
+        manifest = {
+            "appId": app_entity.id,
+            "appName": app_entity.app_name,
+            "codeGenType": app_entity.code_gen_type,
+            "deployKey": app_entity.deploy_key,
+            "deployedTime": app_entity.deployed_time.isoformat() if app_entity.deployed_time else None,
+            "exportedAt": datetime.now(UTC).isoformat(),
+            "files": sorted(file_list),
+        }
+        return self._zip_directory_to_bytes_with_manifest(
+            source_dir=source_dir,
+            root_dir=source_dir.name,
+            manifest=manifest,
+        )
 
     async def get_app_entity_by_id(self, db: AsyncSession, app_id: int) -> App:
         if app_id <= 0:
@@ -266,6 +304,20 @@ class AppService:
             raise BusinessException(ErrorCode.PARAMS_ERROR, f"Unsupported code_gen_type: {value}")
         return value
 
+    async def _resolve_code_gen_type(self, payload: AppAddRequest, routing_service: object | None) -> str:
+        specified = (payload.code_gen_type or "").strip()
+        if specified:
+            return self._normalize_code_gen_type(specified)
+
+        if payload.enable_auto_route and routing_service is not None:
+            route_method = getattr(routing_service, "route", None)
+            if callable(route_method):
+                decision = await route_method(payload.init_prompt or "", None)
+                code_gen_type = getattr(decision, "code_gen_type", None)
+                if isinstance(code_gen_type, str) and code_gen_type in SUPPORTED_CODE_GEN_TYPES:
+                    return code_gen_type
+        return CODE_GEN_TYPE_HTML
+
     @staticmethod
     def _zip_directory_to_bytes(source_dir: Path) -> bytes:
         zip_buffer = io.BytesIO()
@@ -274,4 +326,19 @@ class AppService:
                 if path.is_file():
                     arc_name = path.relative_to(source_dir).as_posix()
                     zip_file.write(path, arcname=arc_name)
+        return zip_buffer.getvalue()
+
+    @staticmethod
+    def _zip_directory_to_bytes_with_manifest(source_dir: Path, root_dir: str, manifest: dict) -> bytes:
+        zip_buffer = io.BytesIO()
+        prefix = root_dir.strip().strip("/") or "project"
+        with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+            for path in source_dir.rglob("*"):
+                if path.is_file():
+                    arc_name = f"{prefix}/{path.relative_to(source_dir).as_posix()}"
+                    zip_file.write(path, arcname=arc_name)
+            zip_file.writestr(
+                f"{prefix}/python-ai-mother-manifest.json",
+                json.dumps(manifest, ensure_ascii=False, indent=2),
+            )
         return zip_buffer.getvalue()

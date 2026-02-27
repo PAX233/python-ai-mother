@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Path, Query
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.codegen_routing_service import AiCodeGenTypeRoutingService
 from app.core.ai_codegen_facade import AiCodeGeneratorFacade
 from app.core.config import Settings
 from app.core.error_codes import ErrorCode
@@ -13,11 +14,13 @@ from app.core.response import BaseResponse, success_response
 from app.core.sse import build_sse_data, build_sse_event
 from app.dependencies import (
     get_ai_codegen_facade,
+    get_ai_routing_service,
     get_app_service,
     get_app_settings,
     get_chat_history_service,
     get_db_session,
     get_login_user,
+    get_screenshot_service,
     require_role,
 )
 from app.models.user import User
@@ -26,6 +29,9 @@ from app.schemas.app import (
     AppAdminUpdateRequest,
     AppDeployRequest,
     AppQueryRequest,
+    AppRouteCodeGenRequest,
+    AppRouteCodeGenResult,
+    AppScreenshotRequest,
     AppUpdateRequest,
     AppVO,
     PageAppVO,
@@ -37,6 +43,7 @@ from app.services.chat_history_service import (
     MESSAGE_TYPE_USER,
     ChatHistoryService,
 )
+from app.services.screenshot_service import ScreenshotService
 from app.services.user_service import USER_ROLE_ADMIN
 
 logger = logging.getLogger(__name__)
@@ -49,8 +56,14 @@ async def add_app(
     login_user: User = Depends(get_login_user),
     db: AsyncSession = Depends(get_db_session),
     app_service: AppService = Depends(get_app_service),
+    ai_routing_service: AiCodeGenTypeRoutingService = Depends(get_ai_routing_service),
 ) -> BaseResponse[int]:
-    app_id = await app_service.add_app(db, payload, login_user)
+    app_id = await app_service.add_app(
+        db=db,
+        payload=payload,
+        login_user=login_user,
+        routing_service=ai_routing_service,
+    )
     return success_response(app_id)
 
 
@@ -185,6 +198,59 @@ async def download_app_code(
     )
     headers = {"Content-Disposition": f'attachment; filename="{app_id}.zip"'}
     return Response(content=zip_bytes, media_type="application/zip", headers=headers)
+
+
+@router.get("/download/project/{app_id}")
+async def download_app_project(
+    app_id: int = Path(gt=0),
+    login_user: User = Depends(get_login_user),
+    settings: Settings = Depends(get_app_settings),
+    db: AsyncSession = Depends(get_db_session),
+    app_service: AppService = Depends(get_app_service),
+) -> Response:
+    zip_bytes = await app_service.build_project_download_zip_bytes(
+        db=db,
+        app_id=app_id,
+        login_user=login_user,
+        generated_root=settings.generated_code_path(),
+    )
+    headers = {"Content-Disposition": f'attachment; filename="project-{app_id}.zip"'}
+    return Response(content=zip_bytes, media_type="application/zip", headers=headers)
+
+
+@router.post("/route/codegen", response_model=BaseResponse[AppRouteCodeGenResult])
+async def route_code_gen_type(
+    payload: AppRouteCodeGenRequest,
+    ai_routing_service: AiCodeGenTypeRoutingService = Depends(get_ai_routing_service),
+) -> BaseResponse[AppRouteCodeGenResult]:
+    decision = await ai_routing_service.route(payload.prompt, payload.preferred_code_gen_type)
+    return success_response(
+        AppRouteCodeGenResult(
+            code_gen_type=decision.code_gen_type,
+            reason=decision.reason,
+            source=decision.source,
+        )
+    )
+
+
+@router.post("/screenshot", response_model=BaseResponse[str])
+async def capture_app_screenshot(
+    payload: AppScreenshotRequest,
+    login_user: User = Depends(get_login_user),
+    settings: Settings = Depends(get_app_settings),
+    db: AsyncSession = Depends(get_db_session),
+    app_service: AppService = Depends(get_app_service),
+    screenshot_service: ScreenshotService = Depends(get_screenshot_service),
+) -> BaseResponse[str]:
+    app_id = payload.app_id or 0
+    screenshot_url = await screenshot_service.capture_app_screenshot(
+        db=db,
+        app_id=app_id,
+        login_user=login_user,
+        app_service=app_service,
+        settings=settings,
+    )
+    return success_response(screenshot_url)
 
 
 @router.get("/chat/gen/code")

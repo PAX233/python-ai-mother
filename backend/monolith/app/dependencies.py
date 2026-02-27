@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.codegen_routing_service import AiCodeGenTypeRoutingService
 from app.core.config import Settings, get_settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
@@ -11,6 +12,7 @@ from app.core.ai_codegen_facade import AiCodeGeneratorFacade
 from app.models.user import User
 from app.services.app_service import AppService
 from app.services.chat_history_service import ChatHistoryService
+from app.services.screenshot_service import ScreenshotService
 from app.services.session_service import SessionService
 from app.services.user_service import UserService
 
@@ -48,6 +50,14 @@ def get_chat_history_service() -> ChatHistoryService:
 
 def get_ai_codegen_facade(settings: Settings = Depends(get_app_settings)) -> AiCodeGeneratorFacade:
     return AiCodeGeneratorFacade(settings=settings)
+
+
+def get_ai_routing_service(settings: Settings = Depends(get_app_settings)) -> AiCodeGenTypeRoutingService:
+    return AiCodeGenTypeRoutingService(settings=settings)
+
+
+def get_screenshot_service() -> ScreenshotService:
+    return ScreenshotService()
 
 
 async def get_login_user(

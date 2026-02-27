@@ -62,7 +62,13 @@ uv run pytest -q -p no:faulthandler
 - `GET /api/app/get/vo?id={appId}`
 - `GET /api/app/chat/gen/code?appId={appId}&message=...`（SSE）
 
-## 7. 模型环境变量（仅运行时）
+## 7. M06 扩展接口
+
+- `POST /api/app/route/codegen`
+- `POST /api/app/screenshot`
+- `GET /api/app/download/project/{appId}`
+
+## 8. 模型环境变量（仅运行时）
 
 不要把真实密钥写入仓库文件（包括 `.env.example`、`README`、提交记录）。
 
