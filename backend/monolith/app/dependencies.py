@@ -13,6 +13,7 @@ from app.core.codegen_workflow import CodeGenWorkflowRunner
 from app.models.user import User
 from app.services.app_service import AppService
 from app.services.chat_history_service import ChatHistoryService
+from app.services.rate_limit_service import RateLimitService
 from app.services.screenshot_service import ScreenshotService
 from app.services.session_service import SessionService
 from app.services.user_service import UserService
@@ -41,12 +42,22 @@ def get_user_service(
     return UserService(settings=settings, session_service=SessionService(redis_client, settings))
 
 
-def get_app_service() -> AppService:
-    return AppService()
+def get_app_service(
+    settings: Settings = Depends(get_app_settings),
+    redis_client: Redis | None = Depends(get_redis_client),
+) -> AppService:
+    return AppService(settings=settings, redis_client=redis_client)
 
 
 def get_chat_history_service() -> ChatHistoryService:
     return ChatHistoryService()
+
+
+def get_rate_limit_service(
+    settings: Settings = Depends(get_app_settings),
+    redis_client: Redis | None = Depends(get_redis_client),
+) -> RateLimitService:
+    return RateLimitService(redis_client=redis_client, settings=settings)
 
 
 def get_ai_codegen_facade(settings: Settings = Depends(get_app_settings)) -> AiCodeGeneratorFacade:

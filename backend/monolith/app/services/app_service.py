@@ -1,16 +1,21 @@
 import io
 import json
 import shutil
+import time
 import zipfile
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from math import ceil
 from pathlib import Path
 from typing import Any
 
+from redis.asyncio import Redis
+from redis.exceptions import RedisError
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.code_gen_types import CODE_GEN_TYPE_HTML, SUPPORTED_CODE_GEN_TYPES
+from app.core.config import Settings
 from app.core.edit_modes import EDIT_MODE_FULL, SUPPORTED_EDIT_MODES
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import BusinessException
@@ -33,6 +38,7 @@ GOOD_APP_PRIORITY = 99
 
 
 class AppService:
+    _memory_cache: dict[str, tuple[str, float]] = {}
     _sortable_fields = {
         "id": App.id,
         "createTime": App.create_time,
@@ -41,6 +47,10 @@ class AppService:
         "priority": App.priority,
         "deployedTime": App.deployed_time,
     }
+
+    def __init__(self, settings: Settings | None = None, redis_client: Redis | None = None) -> None:
+        self.settings = settings
+        self.redis_client = redis_client
 
     async def add_app(
         self,
@@ -60,6 +70,7 @@ class AppService:
         db.add(new_app)
         await db.commit()
         await db.refresh(new_app)
+        await self._invalidate_query_cache()
         return new_app.id
 
     async def update_app(self, db: AsyncSession, payload: AppUpdateRequest, login_user: User) -> bool:
@@ -71,6 +82,7 @@ class AppService:
         if app_name:
             app_entity.app_name = app_name[:128]
         await db.commit()
+        await self._invalidate_query_cache()
         return True
 
     async def delete_app(self, db: AsyncSession, app_id: int, login_user: User) -> bool:
@@ -79,12 +91,14 @@ class AppService:
             raise BusinessException(ErrorCode.NO_AUTH_ERROR, "No permission")
         app_entity.is_delete = 1
         await db.commit()
+        await self._invalidate_query_cache()
         return True
 
     async def delete_app_by_admin(self, db: AsyncSession, app_id: int) -> bool:
         app_entity = await self.get_app_entity_by_id(db, app_id)
         app_entity.is_delete = 1
         await db.commit()
+        await self._invalidate_query_cache()
         return True
 
     async def update_app_by_admin(self, db: AsyncSession, payload: AppAdminUpdateRequest) -> bool:
@@ -100,6 +114,7 @@ class AppService:
         if payload.code_gen_type is not None:
             app_entity.code_gen_type = self._normalize_code_gen_type(payload.code_gen_type)
         await db.commit()
+        await self._invalidate_query_cache()
         return True
 
     async def get_app_vo_by_id(self, db: AsyncSession, app_id: int) -> AppVO:
@@ -111,14 +126,26 @@ class AppService:
         self, db: AsyncSession, payload: AppQueryRequest, login_user: User
     ) -> PageAppVO:
         payload.user_id = login_user.id
-        return await self._list_app_vo_by_page(db, payload, max_page_size=20)
+        return await self._get_or_set_page_cache(
+            cache_scope="my",
+            payload=payload,
+            loader=lambda: self._list_app_vo_by_page(db, payload, max_page_size=20),
+        )
 
     async def list_good_app_vo_by_page(self, db: AsyncSession, payload: AppQueryRequest) -> PageAppVO:
         payload.priority = GOOD_APP_PRIORITY
-        return await self._list_app_vo_by_page(db, payload, max_page_size=20)
+        return await self._get_or_set_page_cache(
+            cache_scope="good",
+            payload=payload,
+            loader=lambda: self._list_app_vo_by_page(db, payload, max_page_size=20),
+        )
 
     async def list_app_vo_by_page_by_admin(self, db: AsyncSession, payload: AppQueryRequest) -> PageAppVO:
-        return await self._list_app_vo_by_page(db, payload, max_page_size=100)
+        return await self._get_or_set_page_cache(
+            cache_scope="admin",
+            payload=payload,
+            loader=lambda: self._list_app_vo_by_page(db, payload, max_page_size=100),
+        )
 
     async def deploy_app(
         self,
@@ -142,6 +169,7 @@ class AppService:
         app_entity.deploy_key = deploy_key
         app_entity.deployed_time = datetime.now(UTC)
         await db.commit()
+        await self._invalidate_query_cache()
         return f"{deploy_domain.rstrip('/')}/{deploy_key}/"
 
     async def build_download_zip_bytes(self, db: AsyncSession, app_id: int, login_user: User, generated_root: Path) -> bytes:
@@ -274,6 +302,91 @@ class AppService:
         if app_entity is None:
             raise BusinessException(ErrorCode.NOT_FOUND_ERROR, "App not found")
         return app_entity
+
+    @staticmethod
+    def _query_cache_prefix() -> str:
+        return "cache:app:list:"
+
+    def _query_cache_ttl_seconds(self) -> int:
+        if self.settings is None:
+            return 30
+        return max(1, int(self.settings.app_query_cache_ttl_seconds))
+
+    def _build_page_cache_key(self, cache_scope: str, payload: AppQueryRequest) -> str:
+        cache_payload = payload.model_dump(by_alias=True, mode="json")
+        cache_json = json.dumps(cache_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        return f"{self._query_cache_prefix()}{cache_scope}:{cache_json}"
+
+    async def _get_or_set_page_cache(
+        self,
+        cache_scope: str,
+        payload: AppQueryRequest,
+        loader: Callable[[], Awaitable[PageAppVO]],
+    ) -> PageAppVO:
+        cache_key = self._build_page_cache_key(cache_scope, payload)
+        cached_text = await self._cache_get(cache_key)
+        if cached_text:
+            try:
+                cached_obj = json.loads(cached_text)
+                return PageAppVO.model_validate(cached_obj)
+            except json.JSONDecodeError:
+                pass
+
+        page = await loader()
+        payload_text = json.dumps(page.model_dump(by_alias=True, mode="json"), ensure_ascii=False)
+        await self._cache_set(cache_key, payload_text, self._query_cache_ttl_seconds())
+        return page
+
+    async def _cache_get(self, key: str) -> str | None:
+        if self.redis_client is not None:
+            try:
+                redis_value = await self.redis_client.get(key)
+                if isinstance(redis_value, str):
+                    return redis_value
+            except RedisError:
+                pass
+
+        cached = self._memory_cache.get(key)
+        if cached is None:
+            return None
+        value, expire_at = cached
+        if time.monotonic() >= expire_at:
+            self._memory_cache.pop(key, None)
+            return None
+        return value
+
+    async def _cache_set(self, key: str, value: str, ttl_seconds: int) -> None:
+        self._memory_cache[key] = (value, time.monotonic() + ttl_seconds)
+        if self.redis_client is None:
+            return
+        try:
+            await self.redis_client.setex(key, ttl_seconds, value)
+        except RedisError:
+            return
+
+    async def _invalidate_query_cache(self) -> None:
+        prefix = self._query_cache_prefix()
+        stale_keys = [item for item in self._memory_cache if item.startswith(prefix)]
+        for key in stale_keys:
+            self._memory_cache.pop(key, None)
+
+        if self.redis_client is None:
+            return
+        scan_iter = getattr(self.redis_client, "scan_iter", None)
+        if not callable(scan_iter):
+            return
+
+        delete_keys: list[str] = []
+        try:
+            async for key in scan_iter(match=f"{prefix}*"):
+                if isinstance(key, str):
+                    delete_keys.append(key)
+                elif isinstance(key, bytes):
+                    delete_keys.append(key.decode("utf-8", errors="ignore"))
+            if delete_keys:
+                await self.redis_client.delete(*delete_keys)
+        except RedisError:
+            return
 
     async def _list_app_vo_by_page(
         self,

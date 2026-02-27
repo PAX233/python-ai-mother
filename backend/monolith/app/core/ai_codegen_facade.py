@@ -33,7 +33,8 @@ class AiCodeGeneratorFacade:
     ) -> AsyncIterator[str | dict[str, Any]]:
         prompt_name = self._resolve_prompt_name(code_gen_type)
         system_prompt = load_prompt(prompt_name)
-        final_user_message = self._build_edit_mode_message(user_message, edit_mode)
+        guarded_message = self._guard_and_trim_prompt(user_message)
+        final_user_message = self._build_edit_mode_message(guarded_message, edit_mode)
 
         yield self._tool_event("start", "llm.generate", "开始调用模型生成代码")
         chunks: list[str] = []
@@ -103,3 +104,16 @@ class AiCodeGeneratorFacade:
             f"{content}\n\n"
             "请采用全量修改模式：输出完整结果（而不是只输出差异）。"
         )
+
+    def _guard_and_trim_prompt(self, user_message: str) -> str:
+        content = (user_message or "").strip()
+        block_words = [item.strip().lower() for item in self.settings.prompt_block_keywords.split(",") if item.strip()]
+        normalized = content.lower()
+        for word in block_words:
+            if word and word in normalized:
+                raise BusinessException(ErrorCode.PARAMS_ERROR, f"Prompt blocked by safety rule: {word}")
+
+        max_len = max(256, int(self.settings.llm_max_prompt_chars))
+        if len(content) > max_len:
+            content = content[:max_len]
+        return content
