@@ -68,7 +68,14 @@ uv run pytest -q -p no:faulthandler
 - `POST /api/app/screenshot`
 - `GET /api/app/download/project/{appId}`
 
-## 8. 模型环境变量（仅运行时）
+## 8. M07 版本管理接口
+
+- `POST /api/app/version/snapshot`
+- `GET /api/app/version/list?appId={appId}`
+- `POST /api/app/version/rollback`
+- `GET /api/app/chat/gen/code?...&editMode=full|incremental`
+
+## 9. 模型环境变量（仅运行时）
 
 不要把真实密钥写入仓库文件（包括 `.env.example`、`README`、提交记录）。
 

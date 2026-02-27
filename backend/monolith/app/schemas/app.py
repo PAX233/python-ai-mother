@@ -57,6 +57,31 @@ class AppRouteCodeGenResult(BaseModel):
     source: str
 
 
+class AppVersionSnapshotRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    app_id: int | None = Field(default=None, alias="appId")
+    message: str | None = None
+    edit_mode: str = Field(default="full", alias="editMode")
+
+
+class AppVersionRollbackRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    app_id: int | None = Field(default=None, alias="appId")
+    version: int
+
+
+class AppVersionVO(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    version: int
+    file_name: str = Field(alias="fileName")
+    message: str | None = None
+    edit_mode: str = Field(alias="editMode")
+    created_time: str = Field(alias="createdTime")
+
+
 class AppQueryRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 

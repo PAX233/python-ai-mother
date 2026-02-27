@@ -15,6 +15,21 @@
           </template>
           应用详情
         </a-button>
+        <a-select
+            v-model:value="chatEditMode"
+            :options="[
+              { label: '全量修改', value: 'full' },
+              { label: '增量修改', value: 'incremental' },
+            ]"
+            style="width: 120px"
+            :disabled="isGenerating || !isOwner"
+        />
+        <a-button type="default" @click="openRollbackModal" :disabled="!isOwner">
+          <template #icon>
+            <HistoryOutlined />
+          </template>
+          回滚
+        </a-button>
         <a-button
             type="primary"
             ghost
@@ -234,6 +249,35 @@
         :deploy-url="deployUrl"
         @open-site="openDeployedSite"
     />
+
+    <a-modal
+        v-model:open="rollbackModalVisible"
+        title="版本回滚"
+        :footer="null"
+        width="720px"
+    >
+      <div v-if="versionList.length === 0" class="version-empty">暂无可回滚版本</div>
+      <div v-else class="version-list">
+        <div v-for="item in versionList" :key="item.version" class="version-item">
+          <div class="version-main">
+            <div class="version-title">
+              版本 v{{ item.version }} · {{ item.editMode === 'incremental' ? '增量' : '全量' }}
+            </div>
+            <div class="version-meta">{{ item.createdTime }}</div>
+            <div v-if="item.message" class="version-message">{{ item.message }}</div>
+          </div>
+          <a-button
+              type="primary"
+              ghost
+              size="small"
+              :loading="rollbackLoadingVersion === item.version"
+              @click="doRollback(item.version)"
+          >
+            回滚到此版本
+          </a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -246,6 +290,8 @@ import {
   captureAppScreenshot,
   downloadAppProject,
   getAppVoById,
+  listAppVersions,
+  rollbackAppVersion,
   deployApp as deployAppApi,
   deleteApp as deleteAppApi,
 } from '@/api/appController'
@@ -268,6 +314,7 @@ import {
   DownloadOutlined,
   CameraOutlined,
   EditOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons-vue'
 
 const route = useRoute()
@@ -316,6 +363,10 @@ const deployUrl = ref('')
 // 下载相关
 const downloading = ref(false)
 const capturingScreenshot = ref(false)
+const chatEditMode = ref<'full' | 'incremental'>('full')
+const rollbackModalVisible = ref(false)
+const versionList = ref<API.AppVersionVO[]>([])
+const rollbackLoadingVersion = ref<number | null>(null)
 
 // 可视化编辑相关
 const isEditMode = ref(false)
@@ -535,6 +586,7 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
     const params = new URLSearchParams({
       appId: appId.value || '',
       message: userMessage,
+      editMode: chatEditMode.value,
     })
 
     const url = `${baseURL}/app/chat/gen/code?${params}`
@@ -720,6 +772,50 @@ const captureScreenshot = async () => {
   }
 }
 
+const loadVersionList = async () => {
+  if (!appId.value) return
+  try {
+    const res = await listAppVersions({ appId: Number(appId.value) })
+    if (res.data.code === 0 && res.data.data) {
+      versionList.value = res.data.data
+    } else {
+      versionList.value = []
+    }
+  } catch (error) {
+    console.error('加载版本列表失败：', error)
+    message.error('加载版本列表失败')
+  }
+}
+
+const openRollbackModal = async () => {
+  rollbackModalVisible.value = true
+  await loadVersionList()
+}
+
+const doRollback = async (version?: number) => {
+  if (!appId.value || !version) return
+  rollbackLoadingVersion.value = version
+  try {
+    const res = await rollbackAppVersion({
+      appId: Number(appId.value),
+      version,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      message.success(`已回滚到版本 v${version}`)
+      rollbackModalVisible.value = false
+      await fetchAppInfo()
+      updatePreview()
+    } else {
+      message.error('回滚失败：' + (res.data.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('回滚失败：', error)
+    message.error('回滚失败，请重试')
+  } finally {
+    rollbackLoadingVersion.value = null
+  }
+}
+
 // 部署应用
 const deployApp = async () => {
   if (!appId.value) {
@@ -826,6 +922,9 @@ const getInputPlaceholder = () => {
   }
   if (selectedElementInfo.value) {
     return `正在编辑 ${selectedElementInfo.value.tagName.toLowerCase()} 元素，描述您想要的修改...`
+  }
+  if (chatEditMode.value === 'incremental') {
+    return '增量模式：描述你要修改的局部内容，系统会尽量只更新相关文件'
   }
   return '请描述你想生成的网站，越详细效果越好哦'
 }
@@ -1095,6 +1194,49 @@ onUnmounted(() => {
 
 .selected-element-alert {
   margin: 0 16px;
+}
+
+.version-empty {
+  color: #666;
+  padding: 12px 0;
+}
+
+.version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.version-main {
+  flex: 1;
+}
+
+.version-title {
+  font-weight: 600;
+  color: #222;
+}
+
+.version-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.version-message {
+  margin-top: 8px;
+  color: #444;
 }
 
 /* 响应式设计 */

@@ -139,6 +139,7 @@ declare namespace API {
   type chatToGenCodeParams = {
     appId: number
     message: string
+    editMode?: string
   }
 
   type DeleteRequest = {
@@ -173,6 +174,10 @@ declare namespace API {
     appId: number
     pageSize?: number
     lastCreateTime?: string
+  }
+
+  type listAppVersionsParams = {
+    appId: number
   }
 
   type LoginUserVO = {
@@ -297,9 +302,28 @@ declare namespace API {
     appId?: number
   }
 
+  type AppVersionRollbackRequest = {
+    appId?: number
+    version: number
+  }
+
+  type AppVersionVO = {
+    version?: number
+    fileName?: string
+    message?: string
+    editMode?: string
+    createdTime?: string
+  }
+
   type BaseResponseAppRouteCodeGenResult = {
     code?: number
     data?: AppRouteCodeGenResult
+    message?: string
+  }
+
+  type BaseResponseListAppVersionVO = {
+    code?: number
+    data?: AppVersionVO[]
     message?: string
   }
 }

@@ -30,7 +30,13 @@ class FakeRedis:
 
 
 class FakeFacade:
-    async def generate_and_save_code_stream(self, app_id: int, user_message: str, code_gen_type: str):
+    async def generate_and_save_code_stream(
+        self,
+        app_id: int,
+        user_message: str,
+        code_gen_type: str,
+        edit_mode: str,
+    ):
         assert app_id > 0
         assert user_message
         assert code_gen_type

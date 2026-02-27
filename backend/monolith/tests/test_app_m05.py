@@ -68,7 +68,13 @@ def test_vue_project_chat_stream_with_tool_events_and_deploy() -> None:
     settings = get_settings()
 
     class FakeProjectFacade:
-        async def generate_and_save_code_stream(self, app_id: int, user_message: str, code_gen_type: str):
+        async def generate_and_save_code_stream(
+            self,
+            app_id: int,
+            user_message: str,
+            code_gen_type: str,
+            edit_mode: str,
+        ):
             output_dir = settings.generated_code_path() / f"{code_gen_type}_{app_id}"
             (output_dir / "dist").mkdir(parents=True, exist_ok=True)
             (output_dir / "dist" / "index.html").write_text(

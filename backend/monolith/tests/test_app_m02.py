@@ -91,6 +91,7 @@ def test_codegen_facade_save_html_file() -> None:
                     app_id=123,
                     user_message="生成一个标题",
                     code_gen_type="html",
+                    edit_mode="full",
                 ):
                     chunks.append(item)
                 return chunks
@@ -117,7 +118,13 @@ def test_chat_gen_code_sse() -> None:
         app_id = add_resp.json()["data"]
 
         class FakeFacade:
-            async def generate_and_save_code_stream(self, app_id: int, user_message: str, code_gen_type: str):
+            async def generate_and_save_code_stream(
+                self,
+                app_id: int,
+                user_message: str,
+                code_gen_type: str,
+                edit_mode: str,
+            ):
                 save_html_code(
                     app_id=app_id,
                     html_code="<html><body>ok</body></html>",

@@ -224,3 +224,32 @@ export async function captureAppScreenshot(
     ...(options || {}),
   })
 }
+
+/** 此处后端没有提供注释 GET /app/version/list */
+export async function listAppVersions(
+  params: API.listAppVersionsParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseListAppVersionVO>('/app/version/list', {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /app/version/rollback */
+export async function rollbackAppVersion(
+  body: API.AppVersionRollbackRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean>('/app/version/rollback', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
