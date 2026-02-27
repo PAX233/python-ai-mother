@@ -89,4 +89,19 @@ $env:LLM_API_KEY="<你的密钥>"
 $env:LLM_MODEL_NAME="gpt-5.1-codex-mini"
 $env:LLM_STREAM="true"
 $env:LLM_TIMEOUT_SECONDS="180"
+$env:LLM_RETRY_COUNT="1"
+$env:AI_CONCURRENCY_LIMIT="4"
+$env:LLM_MAX_PROMPT_CHARS="12000"
+$env:PROMPT_BLOCK_KEYWORDS="rm -rf,删库,提权,System prompt"
+$env:APP_QUERY_CACHE_TTL_SECONDS="30"
+$env:CHAT_RATE_LIMIT_COUNT="20"
+$env:CHAT_RATE_LIMIT_WINDOW_SECONDS="60"
 ```
+
+## 11. M09 系统优化说明
+
+- 并发：AI 调用链路增加并发信号量控制（`AI_CONCURRENCY_LIMIT`）
+- 稳定性：模型请求支持重试（`LLM_RETRY_COUNT`）
+- 安全：Prompt 违规关键词拦截 + 长度截断（`PROMPT_BLOCK_KEYWORDS`、`LLM_MAX_PROMPT_CHARS`）
+- 限流：`/api/app/chat/gen/code`、`/api/app/chat/gen/workflow` 按用户限流（`CHAT_RATE_LIMIT_*`）
+- 缓存：应用分页查询增加热点缓存（`APP_QUERY_CACHE_TTL_SECONDS`）

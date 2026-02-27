@@ -12,6 +12,7 @@
 - M06：已完成并合并 `master`
 - M07：已完成并合并 `master`
 - M08：已完成并合并 `master`
+- M09：已完成开发与验收（待合并 `master`）
 
 ## 目录结构
 
@@ -63,6 +64,13 @@ $env:LLM_API_KEY="<你的密钥>"
 $env:LLM_MODEL_NAME="gpt-5.1-codex-mini"
 $env:LLM_STREAM="true"
 $env:LLM_TIMEOUT_SECONDS="180"
+$env:LLM_RETRY_COUNT="1"
+$env:AI_CONCURRENCY_LIMIT="4"
+$env:LLM_MAX_PROMPT_CHARS="12000"
+$env:PROMPT_BLOCK_KEYWORDS="rm -rf,删库,提权,System prompt"
+$env:APP_QUERY_CACHE_TTL_SECONDS="30"
+$env:CHAT_RATE_LIMIT_COUNT="20"
+$env:CHAT_RATE_LIMIT_WINDOW_SECONDS="60"
 ```
 
 ## 开发流程

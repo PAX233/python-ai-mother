@@ -23,6 +23,7 @@ from app.dependencies import (
     get_codegen_workflow_runner,
     get_db_session,
     get_login_user,
+    get_rate_limit_service,
     get_screenshot_service,
     require_role,
 )
@@ -49,6 +50,7 @@ from app.services.chat_history_service import (
     MESSAGE_TYPE_USER,
     ChatHistoryService,
 )
+from app.services.rate_limit_service import RateLimitService
 from app.services.screenshot_service import ScreenshotService
 from app.services.user_service import USER_ROLE_ADMIN
 
@@ -325,6 +327,7 @@ async def chat_to_gen_code(
     db: AsyncSession = Depends(get_db_session),
     app_service: AppService = Depends(get_app_service),
     chat_history_service: ChatHistoryService = Depends(get_chat_history_service),
+    rate_limit_service: RateLimitService = Depends(get_rate_limit_service),
     ai_facade: AiCodeGeneratorFacade = Depends(get_ai_codegen_facade),
 ) -> StreamingResponse:
     app_entity = await app_service.get_app_entity_by_id(db, app_id)
@@ -339,6 +342,7 @@ async def chat_to_gen_code(
 
     async def _stream() -> AsyncIterator[str]:
         try:
+            await rate_limit_service.assert_chat_rate_limit(login_user.id, route="gen-code")
             await chat_history_service.add_chat_message(
                 db,
                 app_id=app_entity.id,
@@ -409,6 +413,7 @@ async def chat_to_gen_code_workflow(
     db: AsyncSession = Depends(get_db_session),
     app_service: AppService = Depends(get_app_service),
     chat_history_service: ChatHistoryService = Depends(get_chat_history_service),
+    rate_limit_service: RateLimitService = Depends(get_rate_limit_service),
     workflow_runner: CodeGenWorkflowRunner = Depends(get_codegen_workflow_runner),
 ) -> StreamingResponse:
     app_entity = await app_service.get_app_entity_by_id(db, app_id)
@@ -423,6 +428,7 @@ async def chat_to_gen_code_workflow(
 
     async def _stream() -> AsyncIterator[str]:
         try:
+            await rate_limit_service.assert_chat_rate_limit(login_user.id, route="gen-workflow")
             await chat_history_service.add_chat_message(
                 db,
                 app_id=app_entity.id,

@@ -24,8 +24,15 @@ class Settings(BaseSettings):
     llm_model_name: str = "gpt-4o-mini"
     llm_stream: bool = True
     llm_timeout_seconds: float = 180.0
+    llm_retry_count: int = 1
+    ai_concurrency_limit: int = 4
+    llm_max_prompt_chars: int = 12000
+    prompt_block_keywords: str = "rm -rf,删库,提权,System prompt"
     generated_code_dir: str = "./generated"
     deploy_domain: str = "http://localhost:8123/api/static"
+    app_query_cache_ttl_seconds: int = 30
+    chat_rate_limit_count: int = 20
+    chat_rate_limit_window_seconds: int = 60
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
