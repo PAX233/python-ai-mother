@@ -9,7 +9,7 @@
 - 源项目（Java 后端）：`yu-ai-code-mother`
 - 源项目地址：`https://github.com/liyupi/yu-ai-code-mother`
 - 本项目（Python 后端重构版）：`python-ai-mother`
-- 本项目地址：`https://github.com/liyupi/python-ai-mother`
+- 本项目地址：`https://github.com/pax233/python-ai-mother`
 
 这次重构不是“推倒重写”，而是“对标迁移”：
 - 对齐业务能力和接口主链路
@@ -237,5 +237,5 @@ uv pip compile requirements.txt -o requirements.lock.txt
 
 # 总结
 本项目全程使用codex完成重构，我只做了微薄的提示词工程，一共耗时两天。
-因为我本人不会python，于是想用python重构这个备受称赞的项目学习。
+因为我本人不会java，于是想用python重构这个备受称赞的项目学习。
 不过由于我是全程vibe coding 不能保证项目完全没有问题，所以大家真想学的话还是看鱼皮的源项目吧。
